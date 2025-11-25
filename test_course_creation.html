@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Course Creation Test</title>
+</head>
+<body>
+    <h1>Course Creation Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test if we can get the selected batch from sidebar context
+        async function testBatchSelection() {
+            try {
+                // First, let's see what batches are available
+                const batchesResponse = await fetch('/api/batches?programId=cmi3bf9qi0006jjq2ifpxs0fs');
+                const batches = await batchesResponse.json();
+                console.log('Available batches:', batches);
+                
+                if (batches.length > 0) {
+                    // Try to get courses for the first batch
+                    const coursesResponse = await fetch('/api/courses?batchId=' + batches[0].id);
+                    const courses = await coursesResponse.json();
+                    console.log('Courses for batch:', courses);
+                    
+                    document.getElementById('result').innerHTML = 
+                        '<h2>Batch: ' + batches[0].name + '</h2>' +
+                        '<p>Courses found: ' + courses.length + '</p>' +
+                        '<p>First course: ' + (courses[0] ? courses[0].name : 'None') + '</p>';
+                } else {
+                    document.getElementById('result').innerHTML = '<p>No batches found</p>';
+                }
+            } catch (error) {
+                console.error('Test failed:', error);
+                document.getElementById('result').innerHTML = '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        testBatchSelection();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1544 @@
+import { db } from './src/lib/db';
+import bcrypt from 'bcryptjs';
+
+async function seed() {
+  try {
+    console.log('🌱 Starting comprehensive database seeding...');
+    
+    // Clean existing data
+    console.log('🧹 Cleaning existing data...');
+    await db.studentMark.deleteMany();
+    await db.cOAttainment.deleteMany();
+    await db.enrollment.deleteMany();
+    await db.questionCOMapping.deleteMany();
+    await db.question.deleteMany();
+    await db.assessment.deleteMany();
+    await db.cOPOMapping.deleteMany();
+    await db.cO.deleteMany();
+    await db.course.deleteMany();
+    await db.batch.deleteMany();
+    await db.program.deleteMany();
+    await db.userDepartment.deleteMany();
+    await db.user.deleteMany();
+    await db.department.deleteMany();
+    await db.college.deleteMany();
+    await db.pO.deleteMany();
+    
+    console.log('✅ Existing data cleaned');
+
+    // Create Colleges
+    console.log('🏫 Creating colleges...');
+    const colleges = await Promise.all([
+      db.college.create({
+        data: {
+          name: 'CUIET',
+          code: 'CUIET',
+          description: 'College of Engineering and Technology',
+        },
+      }),
+      db.college.create({
+        data: {
+          name: 'CBS',
+          code: 'CBS',
+          description: 'College of Business Studies',
+        },
+      }),
+      db.college.create({
+        data: {
+          name: 'CCP',
+          code: 'CCP',
+          description: 'College of Pharmacy',
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${colleges.length} colleges`);
+
+    // Create Departments
+    console.log('🏢 Creating departments...');
+    const departments = await Promise.all([
+      db.department.create({
+        data: {
+          name: 'Computer Science & Engineering',
+          code: 'CSE',
+          collegeId: colleges[0].id,
+          description: 'Department of Computer Science and Engineering',
+        },
+      }),
+      db.department.create({
+        data: {
+          name: 'Mechanical Engineering',
+          code: 'ME',
+          collegeId: colleges[0].id,
+          description: 'Department of Mechanical Engineering',
+        },
+      }),
+      db.department.create({
+        data: {
+          name: 'Business Administration',
+          code: 'BA',
+          collegeId: colleges[1].id,
+          description: 'Department of Business Administration',
+        },
+      }),
+      db.department.create({
+        data: {
+          name: 'Pharmacy',
+          code: 'PHARM',
+          collegeId: colleges[2].id,
+          description: 'Department of Pharmacy',
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${departments.length} departments`);
+
+    // Create Programs
+    console.log('📚 Creating programs...');
+    const programs = await Promise.all([
+      // CUIET Programs
+      db.program.create({
+        data: {
+          name: 'Bachelor of Mechanical Engineering',
+          code: 'BEME',
+          collegeId: colleges[0].id,
+          departmentId: departments[1].id,
+          duration: 4,
+          description: '4-year undergraduate mechanical engineering program',
+        },
+      }),
+      db.program.create({
+        data: {
+          name: 'Bachelor of Computer Science',
+          code: 'BCSE',
+          collegeId: colleges[0].id,
+          departmentId: departments[0].id,
+          duration: 4,
+          description: '4-year undergraduate computer science program',
+        },
+      }),
+      db.program.create({
+        data: {
+          name: 'Master of Technology CSE',
+          code: 'MTCSE',
+          collegeId: colleges[0].id,
+          departmentId: departments[0].id,
+          duration: 2,
+          description: '2-year postgraduate computer science program',
+        },
+      }),
+      // CBS Programs
+      db.program.create({
+        data: {
+          name: 'Bachelor of Business Administration',
+          code: 'BBA',
+          collegeId: colleges[1].id,
+          departmentId: departments[2].id,
+          duration: 3,
+          description: '3-year undergraduate business administration program',
+        },
+      }),
+      db.program.create({
+        data: {
+          name: 'Master of Business Administration',
+          code: 'MBA',
+          collegeId: colleges[1].id,
+          departmentId: departments[2].id,
+          duration: 2,
+          description: '2-year postgraduate business administration program',
+        },
+      }),
+      // CCP Programs
+      db.program.create({
+        data: {
+          name: 'Bachelor of Pharmacy',
+          code: 'BPHARM',
+          collegeId: colleges[2].id,
+          departmentId: departments[3].id,
+          duration: 4,
+          description: '4-year undergraduate pharmacy program',
+        },
+      }),
+      db.program.create({
+        data: {
+          name: 'Master of Pharmacy',
+          code: 'MPHARM',
+          collegeId: colleges[2].id,
+          departmentId: departments[3].id,
+          duration: 2,
+          description: '2-year postgraduate pharmacy program',
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${programs.length} programs`);
+
+    // Create Batches
+    console.log('📅 Creating batches...');
+    const batches = await Promise.all([
+      // BEME Batches
+      db.batch.create({
+        data: {
+          name: '2020-2024',
+          programId: programs[0].id,
+          startYear: 2020,
+          endYear: 2024,
+        },
+      }),
+      db.batch.create({
+        data: {
+          name: '2021-2025',
+          programId: programs[0].id,
+          startYear: 2021,
+          endYear: 2025,
+        },
+      }),
+      db.batch.create({
+        data: {
+          name: '2022-2026',
+          programId: programs[0].id,
+          startYear: 2022,
+          endYear: 2026,
+        },
+      }),
+      // BCSE Batches
+      db.batch.create({
+        data: {
+          name: '2020-2024',
+          programId: programs[1].id,
+          startYear: 2020,
+          endYear: 2024,
+        },
+      }),
+      db.batch.create({
+        data: {
+          name: '2021-2025',
+          programId: programs[1].id,
+          startYear: 2021,
+          endYear: 2025,
+        },
+      }),
+      // BBA Batches
+      db.batch.create({
+        data: {
+          name: '2021-2024',
+          programId: programs[4].id,
+          startYear: 2021,
+          endYear: 2024,
+        },
+      }),
+      db.batch.create({
+        data: {
+          name: '2022-2025',
+          programId: programs[4].id,
+          startYear: 2022,
+          endYear: 2025,
+        },
+      }),
+      // BPHARM Batches
+      db.batch.create({
+        data: {
+          name: '2020-2024',
+          programId: programs[6].id,
+          startYear: 2020,
+          endYear: 2024,
+        },
+      }),
+      db.batch.create({
+        data: {
+          name: '2021-2025',
+          programId: programs[6].id,
+          startYear: 2021,
+          endYear: 2025,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${batches.length} batches`);
+
+    // Create Program Outcomes (POs)
+    console.log('🎯 Creating Program Outcomes...');
+    const pos = await Promise.all([
+      // BEME POs
+      ...['PO1', 'PO2', 'PO3', 'PO4', 'PO5', 'PO6', 'PO7', 'PO8', 'PO9', 'PO10', 'PO11', 'PO12'].map((code, index) => 
+        db.pO.create({
+          data: {
+            programId: programs[0].id,
+            code,
+            description: [
+              'Engineering knowledge: Apply the knowledge of mathematics, science, engineering fundamentals, and an engineering specialization to the solution of complex engineering problems.',
+              'Problem analysis: Identify, formulate, review research literature, and analyze complex engineering problems reaching substantiated conclusions using first principles of mathematics, natural sciences, and engineering sciences.',
+              'Design/development of solutions: Design solutions for complex engineering problems and design system components or processes that meet the specified needs with appropriate consideration for the public health and safety, and the cultural, societal, and environmental considerations.',
+              'Conduct investigations of complex problems: Use research-based knowledge and research methods including design of experiments, analysis and interpretation of data, and synthesis of the information to provide valid conclusions.',
+              'Modern tool usage: Create, select, and apply appropriate techniques, resources, and modern engineering and IT tools including prediction and modeling to complex engineering activities with an understanding of the limitations.',
+              'The engineer and society: Apply reasoning informed by the contextual knowledge to assess societal, health, safety, legal and cultural issues and the consequent responsibilities relevant to the professional engineering practice.',
+              'Environment and sustainability: Understand the impact of the professional engineering solutions in societal and environmental contexts, and demonstrate the knowledge of, and need for sustainable development.',
+              'Ethics: Apply ethical principles and commit to professional ethics and responsibilities and norms of the engineering practice.',
+              'Individual and team work: Function effectively as an individual, and as a member or leader in diverse teams, and in multidisciplinary settings.',
+              'Communication: Communicate effectively on complex engineering activities with the engineering community and with society at large, such as, being able to comprehend and write effective reports and design documentation, make effective presentations, and give and receive clear instructions.',
+              'Project management and finance: Demonstrate knowledge and understanding of the engineering and management principles and apply these to one\'s own work, as a member and leader in a team, to manage projects and in multidisciplinary environments.',
+              'Life-long learning: Recognize the need for, and have the preparation and ability to engage in independent and life-long learning in the broadest context of technological change.'
+            ][index],
+          },
+        })
+      ),
+      // BBA POs
+      ...['PO1', 'PO2', 'PO3', 'PO4', 'PO5', 'PO6'].map((code, index) => 
+        db.pO.create({
+          data: {
+            programId: programs[4].id,
+            code,
+            description: [
+              'Business Knowledge: Apply fundamental knowledge of business administration, management principles, and economic theories to solve business problems.',
+              'Critical Thinking: Analyze complex business situations, evaluate alternatives, and make informed decisions using appropriate analytical tools.',
+              'Communication Skills: Communicate effectively in various business contexts using oral, written, and digital communication methods.',
+              'Leadership and Teamwork: Demonstrate leadership qualities and work effectively in teams to achieve organizational goals.',
+              'Ethical Responsibility: Apply ethical principles and social responsibility in business decision-making and professional conduct.',
+              'Global Perspective: Understand and analyze business issues in a global context with awareness of cultural diversity and international business practices.',
+            ][index],
+          },
+        })
+      ),
+      // BPHARM POs
+      ...['PO1', 'PO2', 'PO3', 'PO4', 'PO5', 'PO6', 'PO7', 'PO8', 'PO9', 'PO10'].map((code, index) => 
+        db.pO.create({
+          data: {
+            programId: programs[6].id,
+            code,
+            description: [
+              'Pharmacy Knowledge: Apply fundamental knowledge of pharmaceutical sciences, pharmacology, and pharmacy practice to solve healthcare problems.',
+              'Patient Care: Provide quality pharmaceutical care with empathy, professionalism, and attention to patient safety and well-being.',
+              'Drug Development: Understand the drug development process, from discovery to commercialization, including regulatory requirements and quality control.',
+              'Clinical Research: Participate in clinical research activities and contribute to the advancement of pharmaceutical sciences.',
+              'Ethical Practice: Adhere to ethical standards and legal regulations in pharmacy practice and patient interactions.',
+              'Healthcare Systems: Navigate healthcare systems and policies to optimize patient care and medication management.',
+              'Communication: Communicate effectively with patients, healthcare professionals, and other stakeholders in healthcare settings.',
+              'Critical Thinking: Analyze complex pharmaceutical problems and make evidence-based decisions in patient care and drug therapy.',
+            ][index],
+          },
+        })
+      ),
+    ]);
+
+    console.log(`✅ Created ${pos.length} Program Outcomes`);
+
+    // Create Courses with COs and Assessments
+    console.log('📚 Creating courses with COs and assessments...');
+    const courses = await Promise.all([
+      // BEME 2020-2024 Courses
+      db.course.create({
+        data: {
+          code: 'ME101',
+          name: 'Engineering Mathematics I',
+          batchId: batches[0].id,
+          description: 'Fundamental concepts in calculus, linear algebra, and differential equations for engineering students.',
+          status: 'COMPLETED',
+          targetPercentage: 60.0,
+          level1Threshold: 60.0,
+          level2Threshold: 75.0,
+          level3Threshold: 85.0,
+        },
+      }),
+      db.course.create({
+        data: {
+          code: 'ME102',
+          name: 'Engineering Mechanics',
+          batchId: batches[0].id,
+          description: 'Introduction to statics, dynamics, and mechanics of materials for mechanical engineering.',
+          status: 'COMPLETED',
+          targetPercentage: 60.0,
+          level1Threshold: 60.0,
+          level2Threshold: 75.0,
+          level3Threshold: 85.0,
+        },
+      }),
+      db.course.create({
+        data: {
+          code: 'ME201',
+          name: 'Thermodynamics',
+          batchId: batches[0].id,
+          description: 'Principles of thermodynamics, heat transfer, and energy systems for mechanical engineering.',
+          status: 'ACTIVE',
+          targetPercentage: 65.0,
+          level1Threshold: 65.0,
+          level2Threshold: 80.0,
+          level3Threshold: 90.0,
+        },
+      }),
+      // BEME 2021-2025 Courses
+      db.course.create({
+        data: {
+          code: 'ME301',
+          name: 'Advanced Thermodynamics',
+          batchId: batches[1].id,
+          description: 'Advanced topics in thermodynamics including statistical thermodynamics and applications.',
+          status: 'ACTIVE',
+          targetPercentage: 65.0,
+          level1Threshold: 65.0,
+          level2Threshold: 80.0,
+          level3Threshold: 90.0,
+        },
+      }),
+      db.course.create({
+        data: {
+          code: 'ME302',
+          name: 'Fluid Mechanics',
+          batchId: batches[1].id,
+          description: 'Study of fluid behavior, fluid statics, and fluid dynamics for engineering applications.',
+          status: 'ACTIVE',
+          targetPercentage: 65.0,
+          level1Threshold: 65.0,
+          level2Threshold: 80.0,
+          level3Threshold: 90.0,
+        },
+      }),
+      // BCSE 2020-2024 Courses
+      db.course.create({
+        data: {
+          code: 'CS101',
+          name: 'Programming Fundamentals',
+          batchId: batches[3].id,
+          description: 'Introduction to programming concepts, algorithms, and problem-solving techniques.',
+          status: 'COMPLETED',
+          targetPercentage: 70.0,
+          level1Threshold: 70.0,
+          level2Threshold: 85.0,
+          level3Threshold: 95.0,
+        },
+      }),
+      db.course.create({
+        data: {
+          code: 'CS102',
+          name: 'Data Structures and Algorithms',
+          batchId: batches[3].id,
+          description: 'Study of data structures, algorithms, and their analysis and design.',
+          status: 'COMPLETED',
+          targetPercentage: 70.0,
+          level1Threshold: 70.0,
+          level2Threshold: 85.0,
+          level3Threshold: 95.0,
+        },
+      }),
+      // BBA 2021-2024 Courses
+      db.course.create({
+        data: {
+          code: 'BA101',
+          name: 'Business Mathematics',
+          batchId: batches[4].id,
+          description: 'Mathematical concepts and techniques for business decision-making.',
+          status: 'COMPLETED',
+          targetPercentage: 65.0,
+          level1Threshold: 65.0,
+          level2Threshold: 80.0,
+          level3Threshold: 90.0,
+        },
+      }),
+      db.course.create({
+        data: {
+          code: 'BA102',
+          name: 'Financial Accounting',
+          batchId: batches[4].id,
+          description: 'Principles and practices of financial accounting for business management.',
+          status: 'COMPLETED',
+          targetPercentage: 65.0,
+          level1Threshold: 65.0,
+          level2Threshold: 80.0,
+          level3Threshold: 90.0,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${courses.length} courses`);
+
+    // Create Course Outcomes (COs)
+    console.log('🎯 Creating Course Outcomes...');
+    const cos = await Promise.all([
+      // ME101 COs
+      db.cO.create({
+        data: {
+          courseId: courses[0].id,
+          code: 'CO101',
+          description: 'Apply calculus concepts to solve engineering problems involving limits, derivatives, and integrals.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[0].id,
+          code: 'CO102',
+          description: 'Use vector analysis to solve problems in statics and mechanics.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[0].id,
+          code: 'CO103',
+          description: 'Apply differential equations to analyze dynamic systems and heat transfer problems.',
+        },
+      }),
+      // ME102 COs
+      db.cO.create({
+        data: {
+          courseId: courses[1].id,
+          code: 'CO201',
+          description: 'Analyze forces and moments in static and dynamic equilibrium of rigid bodies.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[1].id,
+          code: 'CO202',
+          description: 'Apply principles of stress and strain analysis to mechanical components.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[1].id,
+          code: 'CO203',
+          description: 'Apply thermodynamic laws to solve heat transfer and energy conversion problems.',
+        },
+      }),
+      // ME201 COs
+      db.cO.create({
+        data: {
+          courseId: courses[3].id,
+          code: 'CO301',
+          description: 'Apply advanced thermodynamic principles to complex engineering systems.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[3].id,
+          code: 'CO302',
+          description: 'Analyze fluid flow and pressure drop in pipe systems and channels.',
+        },
+      }),
+      // CS101 COs
+      db.cO.create({
+        data: {
+          courseId: courses[4].id,
+          code: 'CO101',
+          description: 'Design and implement algorithms using fundamental programming constructs.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[4].id,
+          code: 'CO102',
+          description: 'Implement and analyze data structures for efficient data storage and retrieval.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[4].id,
+          code: 'CO103',
+          description: 'Analyze algorithmic complexity and performance of software solutions.',
+        },
+      }),
+      // BA101 COs
+      db.cO.create({
+        data: {
+          courseId: courses[6].id,
+          code: 'CO101',
+          description: 'Apply mathematical concepts to business and economic decision-making.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[6].id,
+          code: 'CO102',
+          description: 'Use statistical methods to analyze business data and make informed decisions.',
+        },
+      }),
+      // BA102 COs
+      db.cO.create({
+        data: {
+          courseId: courses[7].id,
+          code: 'CO201',
+          description: 'Apply accounting principles to record and analyze financial transactions.',
+        },
+      }),
+      db.cO.create({
+        data: {
+          courseId: courses[7].id,
+          code: 'CO202',
+          description: 'Prepare and analyze financial statements for business reporting.',
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${cos.length} Course Outcomes`);
+
+    // Create Assessments
+    console.log('📝 Creating assessments...');
+    const assessments = await Promise.all([
+      // ME101 Assessment
+      db.assessment.create({
+        data: {
+          courseId: courses[0].id,
+          name: 'Mid-Term Examination',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 30.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[0].id,
+          name: 'Final Examination',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 40.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[0].id,
+          name: 'Assignment 1',
+          type: 'assignment',
+          maxMarks: 50,
+          weightage: 10.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[0].id,
+          name: 'Assignment 2',
+          type: 'assignment',
+          maxMarks: 50,
+          weightage: 10.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[0].id,
+          name: 'Quiz 1',
+          type: 'quiz',
+          maxMarks: 20,
+          weightage: 10.0,
+        },
+      }),
+      // ME102 Assessment
+      db.assessment.create({
+        data: {
+          courseId: courses[1].id,
+          name: 'Mid-Term Examination',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 30.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[1].id,
+          name: 'Final Examination',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 40.0,
+        },
+      }),
+      // CS101 Assessment
+      db.assessment.create({
+        data: {
+          courseId: courses[4].id,
+          name: 'Lab Assignment',
+          type: 'assignment',
+          maxMarks: 100,
+          weightage: 20.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[4].id,
+          name: 'Project',
+          type: 'project',
+          maxMarks: 100,
+          weightage: 30.0,
+        },
+      }),
+      // BA101 Assessment
+      db.assessment.create({
+        data: {
+          courseId: courses[6].id,
+          name: 'Mid-Term Test',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 30.0,
+        },
+      }),
+      db.assessment.create({
+        data: {
+          courseId: courses[6].id,
+          name: 'Final Exam',
+          type: 'exam',
+          maxMarks: 100,
+          weightage: 40.0,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${assessments.length} assessments`);
+
+    // Create Questions
+    console.log('❓ Creating assessment questions...');
+    const questions = await Promise.all([
+      // ME101 Questions
+      db.question.create({
+        data: {
+          assessmentId: assessments[0].id,
+          question: 'Find the limit of lim(x→0) sin(x)/x as x approaches 0.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[0].id,
+          question: 'Calculate the derivative of f(x) = x³ + 2x + 5 at x = 1.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[0].id,
+          question: 'Evaluate the integral ∫[0,2] (x² + 1) dx.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[0].id,
+          question: 'Find the eigenvalues of the matrix [[1, 2], [3, 4]].',
+          maxMarks: 10,
+        },
+      }),
+      // ME102 Questions
+      db.question.create({
+        data: {
+          assessmentId: assessments[4].id,
+          question: 'A beam of length 10m is simply supported at both ends. What is the maximum uniformly distributed load it can carry?',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[4].id,
+          question: 'Calculate the moment of inertia for a rectangular beam about its centroidal axis.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[4].id,
+          question: 'A steel rod of 25mm diameter is subjected to a tensile force of 50kN. Calculate the stress.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[4].id,
+          question: 'Explain the first law of thermodynamics and provide a practical example.',
+          maxMarks: 10,
+        },
+      }),
+      // CS101 Questions
+      db.question.create({
+        data: {
+          assessmentId: assessments[7].id,
+          question: 'Implement a binary search algorithm and analyze its time complexity.',
+          maxMarks: 15,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[7].id,
+          question: 'Create a linked list class with methods for insertion, deletion, and search.',
+          maxMarks: 15,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[7].id,
+          question: 'Explain the difference between BFS and DFS graph traversal algorithms.',
+          maxMarks: 10,
+        },
+      }),
+      // BA101 Questions
+      db.question.create({
+        data: {
+          assessmentId: assessments[10].id,
+          question: 'Calculate the compound interest on $10,000 invested at 5% annual rate for 3 years.',
+          maxMarks: 10,
+        },
+      }),
+      db.question.create({
+        data: {
+          assessmentId: assessments[11].id,
+          question: 'Explain the difference between assets and liabilities with examples.',
+          maxMarks: 10,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${questions.length} questions`);
+
+    // Create Question-CO Mappings
+    console.log('🔗 Creating Question-CO mappings...');
+    const questionCOMappings = await Promise.all([
+      // ME101 mappings
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[0].id,
+          coId: cos[0].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[1].id,
+          coId: cos[0].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[2].id,
+          coId: cos[0].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[3].id,
+          coId: cos[0].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[4].id,
+          coId: cos[1].id,
+        },
+      },
+      // ME102 mappings
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[5].id,
+          coId: cos[1].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[6].id,
+          coId: cos[1].id,
+        },
+      },
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[7].id,
+          coId: cos[1].id,
+        },
+      },
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[8].id,
+          coId: cos[2].id,
+        },
+      },
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[9].id,
+          coId: cos[2].id,
+        },
+      },
+      // CS101 mappings
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[10].id,
+          coId: cos[2].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[11].id,
+          coId: cos[2].id,
+        },
+      },
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[12].id,
+          coId: cos[3].id,
+        },
+      },
+      // BA101 mappings
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[13].id,
+          coId: cos[4].id,
+        },
+      }),
+      db.questionCOMapping.create({
+        data: {
+          questionId: questions[14].id,
+          coId: cos[4].id,
+        },
+      },
+    ]);
+
+    console.log(`✅ Created ${questionCOMappings.length} Question-CO mappings`);
+
+    // Create CO-PO Mappings
+    console.log('🎯 Creating CO-PO mappings...');
+    const coPOMappings = await Promise.all([
+      // ME101-PO mappings
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[0].id,
+          poId: pos[0].id,
+          level: 3,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[0].id,
+          poId: pos[1].id,
+          level: 2,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[1].id,
+          poId: pos[2].id,
+          level: 3,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[1].id,
+          poId: pos[3].id,
+          level: 2,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[2].id,
+          poId: pos[4].id,
+          level: 1,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[0].id,
+          coId: cos[2].id,
+          poId: pos[5].id,
+          level: 1,
+        },
+      },
+      // CS101-PO mappings
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[4].id,
+          coId: cos[2].id,
+          poId: pos[0].id,
+          level: 3,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[4].id,
+          coId: cos[2].id,
+          poId: pos[1].id,
+          level: 2,
+        },
+      },
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[4].id,
+          coId: cos[3].id,
+          poId: pos[1].id,
+          level: 2,
+        },
+      },
+      // BA101-PO mappings
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[6].id,
+          coId: cos[4].id,
+          poId: pos[0].id,
+          level: 3,
+        },
+      }),
+      db.cOPOMapping.create({
+        data: {
+          courseId: courses[6].id,
+          coId: cos[4].id,
+          poId: pos[1].id,
+          level: 2,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${coPOMappings.length} CO-PO mappings`);
+
+    // Create Users
+    console.log('👥 Creating users...');
+    const hashedAdminPassword = await bcrypt.hash('admin123', 12);
+    const hashedUniversityPassword = await bcrypt.hash('university123', 12);
+    const hashedDepartmentPassword = await bcrypt.hash('department123', 12);
+    const hashedCoordinatorPassword = await bcrypt.hash('coordinator123', 12);
+    const hashedTeacherPassword = await bcrypt.hash('teacher123', 12);
+    const hashedStudentPassword = await bcrypt.hash('student123', 12);
+
+    const users = await Promise.all([
+      // Admin Users
+      db.user.create({
+        data: {
+          email: 'admin@obeportal.com',
+          password: hashedAdminPassword,
+          name: 'System Administrator',
+          role: 'ADMIN',
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'university@obeportal.com',
+          password: hashedUniversityPassword,
+          name: 'University Administrator',
+          role: 'UNIVERSITY',
+        },
+      }),
+      // Department Users for all colleges
+      db.user.create({
+        data: {
+          email: 'cse@obeportal.com',
+          password: hashedDepartmentPassword,
+          name: 'CSE Department Head',
+          role: 'DEPARTMENT',
+          collegeId: colleges[0].id,
+          departmentId: departments[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'me@obeportal.com',
+          password: hashedDepartmentPassword,
+          name: 'ME Department Head',
+          role: 'DEPARTMENT',
+          collegeId: colleges[0].id,
+          departmentId: departments[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'business@obeportal.com',
+          password: hashedDepartmentPassword,
+          name: 'Business Department Head',
+          role: 'DEPARTMENT',
+          collegeId: colleges[1].id,
+          departmentId: departments[2].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'pharmacy@obeportal.com',
+          password: hashedDepartmentPassword,
+          name: 'Pharmacy Department Head',
+          role: 'DEPARTMENT',
+          collegeId: colleges[2].id,
+          departmentId: departments[3].id,
+        },
+      }),
+      // Program Coordinators
+      db.user.create({
+        data: {
+          email: 'pc.beme@obeportal.com',
+          password: hashedCoordinatorPassword,
+          name: 'BE ME Program Coordinator',
+          role: 'PROGRAM_COORDINATOR',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'pc.bcse@obeportal.com',
+          password: hashedCoordinatorPassword,
+          name: 'BCSE Program Coordinator',
+          role: 'PROGRAM_COORDINATOR',
+          collegeId: colleges[0].id,
+          programId: programs[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'pc.bba@obeportal.com',
+          password: hashedCoordinatorPassword,
+          name: 'BBA Program Coordinator',
+          role: 'PROGRAM_COORDINATOR',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'pc.bpharm@obeportal.com',
+          password: hashedCoordinatorPassword,
+          name: 'BPHARM Program Coordinator',
+          role: 'PROGRAM_COORDINATOR',
+          collegeId: colleges[2].id,
+          programId: programs[6].id,
+        },
+      }),
+      // Teachers
+      db.user.create({
+        data: {
+          email: 'teacher1@obeportal.com',
+          password: hashedTeacherPassword,
+          name: 'John Smith',
+          role: 'TEACHER',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'teacher2@obeportal.com',
+          password: hashedTeacherPassword,
+          name: 'Jane Doe',
+          role: 'TEACHER',
+          collegeId: colleges[0].id,
+          programId: programs[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'teacher3@obeportal.com',
+          password: hashedTeacherPassword,
+          name: 'Robert Johnson',
+          role: 'TEACHER',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'teacher4@obeportal.com',
+          password: hashedTeacherPassword,
+          name: 'Alice Williams',
+          role: 'TEACHER',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'teacher5@obeportal.com',
+          password: hashedTeacherPassword,
+          name: 'Michael Brown',
+          role: 'TEACHER',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+        },
+      },
+      // Students
+      db.user.create({
+        data: {
+          email: 'student1@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Alice Johnson',
+          role: 'STUDENT',
+          studentId: 'BE2001001',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+          batchId: batches[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student2@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Bob Smith',
+          role: 'STUDENT',
+          studentId: 'BE2001002',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+          batchId: batches[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student3@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Carol Williams',
+          role: 'STUDENT',
+          studentId: 'BE2001003',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+          batchId: batches[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student4@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'David Brown',
+          role: 'STUDENT',
+          studentId: 'BE2001004',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+          batchId: batches[0].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student5@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Eva Davis',
+          role: 'STUDENT',
+          studentId: 'BE2001005',
+          collegeId: colleges[0].id,
+          programId: programs[0].id,
+          batchId: batches[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student6@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Frank Miller',
+          role: 'STUDENT',
+          studentId: 'BE2001001',
+          collegeId: colleges[0].id,
+          programId: programs[1].id,
+          batchId: batches[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student7@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Grace Wilson',
+          role: 'STUDENT',
+          studentId: 'BE2001002',
+          collegeId: colleges[0].id,
+          programId: programs[1].id,
+          batchId: batches[1].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student8@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Henry Taylor',
+          role: 'STUDENT',
+          studentId: 'BE2001003',
+          collegeId: colleges[1].id,
+          programId: programs[1].id,
+          batchId: batches[1].id,
+        },
+      },
+      // BBA Students
+      db.user.create({
+        data: {
+          email: 'student9@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Frank Miller',
+          role: 'STUDENT',
+          studentId: 'BA2001001',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+          batchId: batches[4].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student10@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Grace Wilson',
+          role: 'STUDENT',
+          studentId: 'BA2001002',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+          batchId: batches[4].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student11@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'David Brown',
+          role: 'STUDENT',
+          studentId: 'BA2001003',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+          batchId: batches[5].id,
+        },
+      }),
+      db.user.create({
+        data: {
+          email: 'student12@obeportal.com',
+          password: hashedStudentPassword,
+          name: 'Eva Davis',
+          role: 'STUDENT',
+          studentId: 'BA2001004',
+          collegeId: colleges[1].id,
+          programId: programs[4].id,
+          batchId: batches[5].id,
+        },
+      },
+    ]);
+
+    console.log(`✅ Created ${users.length} users`);
+
+    // Create User-Department mappings
+    console.log('🔗 Creating user-department mappings...');
+    const userDepartments = await Promise.all([
+      // Map department heads to their departments
+      db.userDepartment.create({
+        data: {
+          userId: users[3].id, // CSE Department Head
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[4].id, // ME Department Head
+          departmentId: departments[1].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[5].id, // Business Department Head
+          departmentId: departments[2].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[6].id, // Pharmacy Department Head
+          departmentId: departments[3].id,
+        },
+      }),
+      // Additional department users
+      db.userDepartment.create({
+        data: {
+          userId: users[7].id, // BCSE Program Coordinator
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[8].id, // BBA Program Coordinator
+          departmentId: departments[2].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[9].id, // BPHARM Program Coordinator
+          departmentId: departments[3].id,
+        },
+      }),
+      // Teachers mapped to departments
+      db.userDepartment.create({
+        data: {
+          userId: users[10].id, // Teacher 1
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[11].id, // Teacher 2
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[12].id, // Teacher 3
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[13].id, // Teacher 4
+          departmentId: departments[0].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[14].id, // Teacher 5
+          departmentId: departments[1].id,
+        },
+      }),
+      db.userDepartment.create({
+        data: {
+          userId: users[15].id, // Teacher 6
+          departmentId: departments[1].id,
+        },
+      }),
+    ]);
+
+    console.log(`✅ Created ${userDepartments.length} user-department mappings`);
+
+    // Create sample student marks
+    console.log('📊 Creating sample student marks...');
+    const studentMarks = [];
+    
+    // Generate marks for each student in each course
+    for (const student of users.slice(13)) { // Start from student users
+      for (const course of courses.slice(0, 6)) { // First 6 courses
+        // Generate random marks between 40-95
+        const generateMark = () => Math.floor(Math.random() * 56) + 40;
+        
+        for (const assessment of assessments) {
+          if (assessment.courseId === course.id) {
+            for (const question of questions) {
+              if (question.assessmentId === assessment.id) {
+                studentMarks.push({
+                  questionId: question.id,
+                  studentId: student.id,
+                  obtainedMarks: generateMark(),
+                  maxMarks: question.maxMarks,
+                  academicYear: '2024',
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Insert marks in batches
+    for (let i = 0; i < studentMarks.length; i += 100) {
+      const batch = studentMarks.slice(i, i + 100);
+      await db.studentMark.createMany({
+        data: batch,
+      });
+      console.log(`✅ Created marks batch ${Math.floor(i/100) + 1}/${Math.ceil(studentMarks.length/100)}`);
+    }
+
+    console.log(`✅ Created ${studentMarks.length} student marks`);
+
+    // Create sample CO Attainment data
+    console.log('📈 Creating CO attainment data...');
+    const coAttainments = [];
+    
+    for (const student of users.slice(13)) {
+      for (const course of courses.slice(0, 6)) {
+        for (const co of cos) {
+          if (co.courseId === course.id) {
+            // Calculate average marks for this CO
+            const coQuestions = questions.filter(q => 
+              questionCOMappings.some(mapping => 
+                mapping.questionId === q.id && mapping.coId === co.id
+              )
+            );
+            
+            const coMarks = studentMarks.filter(mark => 
+              coQuestions.some(q => q.id === mark.questionId)
+            );
+            
+            if (coMarks.length > 0) {
+              const totalMarks = coMarks.reduce((sum, mark) => sum + mark.obtainedMarks, 0);
+              const totalMaxMarks = coMarks.reduce((sum, mark) => sum + mark.maxMarks, 0);
+              const percentage = (totalMarks / totalMaxMarks) * 100;
+              
+              coAttainments.push({
+                courseId: course.id,
+                coId: co.id,
+                studentId: student.id,
+                percentage: Math.round(percentage * 100) / 100,
+                metTarget: percentage >= course.targetPercentage,
+                academicYear: '2024',
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Insert CO attainments in batches
+    for (let i = 0; i < coAttainments.length; i += 50) {
+      const batch = coAttainments.slice(i, i + 50);
+      await db.cOAttainment.createMany({
+        data: batch,
+      });
+      console.log(`✅ Created CO attainment batch ${Math.floor(i/50) + 1}/${Math.ceil(coAttainments.length/50)}`);
+    }
+
+    console.log(`✅ Created ${coAttainments.length} CO attainment records`);
+
+    // Create enrollments
+    console.log('📝 Creating enrollments...');
+    const enrollments = [];
+    
+    for (const student of users.slice(13)) {
+      for (const course of courses.slice(0, 6)) {
+        enrollments.push({
+          courseId: course.id,
+          studentId: student.id,
+        });
+      }
+    }
+
+    await db.enrollment.createMany({
+      data: enrollments,
+    });
+
+    console.log(`✅ Created ${enrollments.length} enrollments`);
+
+    console.log('🎉 Database seeding completed successfully!');
+    console.log('');
+    console.log('📊 Summary:');
+    console.log(`- ${colleges.length} Colleges`);
+    console.log(`- ${departments.length} Departments`);
+    console.log(`- ${programs.length} Programs`);
+    console.log(`- ${batches.length} Batches`);
+    console.log(`- ${courses.length} Courses`);
+    console.log(`- ${cos.length} Course Outcomes`);
+    console.log(`- ${pos.length} Program Outcomes`);
+    console.log(`- ${assessments.length} Assessments`);
+    console.log(`- ${questions.length} Questions`);
+    console.log(`- ${questionCOMappings.length} Question-CO Mappings`);
+    console.log(`- ${coPOMappings.length} CO-PO Mappings`);
+    console.log(`- ${users.length} Users`);
+    console.log(`- ${userDepartments.length} User-Department Mappings`);
+    console.log(`- ${enrollments.length} Enrollments`);
+    console.log(`- ${studentMarks.length} Student Marks`);
+    console.log(`- ${coAttainments.length} CO Attainments`);
+    console.log('');
+    console.log('🔑 Login Credentials:');
+    console.log('Admin Users:');
+    console.log('  admin@obeportal.com / admin123');
+    console.log('  university@obeportal.com / university123');
+    console.log('');
+    console.log('Department Users:');
+    console.log('  cse@obeportal.com / department123 (CSE Dept Head)');
+    console.log('  me@obeportal.com / department123 (ME Dept Head)');
+    console.log('  business@obeportal.com / department123 (Business Dept Head)');
+    console.log('  pharmacy@obeportal.com / department123 (Pharmacy Dept Head)');
+    console.log('');
+    console.log('Program Coordinators:');
+    console.log('  pc.beme@obeportal.com / coordinator123 (BE ME)');
+    console.log('  pc.bcse@obeportal.com / coordinator123 (BCSE)');
+    console.log('  pc.bba@obeportal.com / coordinator123 (BBA)');
+    console.log('  pc.bpharm@obeportal.com / coordinator123 (BPHARM)');
+    console.log('');
+    console.log('Teachers:');
+    console.log('  teacher1@obeportal.com / teacher123 (CSE)');
+    console.log('  teacher2@obeportal.com / teacher123 (CSE)');
+    console.log('  teacher3@obeportal.com / teacher123 (CSE)');
+    console.log('  teacher4@obeportal.com / teacher123 (CSE)');
+    console.log('  teacher5@obeportal.com / teacher123 (Business)');
+    console.log('  teacher6@obeportal.com / teacher123 (Business)');
+    console.log('');
+    console.log('Students (Password: student123):');
+    users.slice(13).forEach((student, index) => {
+      console.log(`  ${student.email} (${student.studentId})`);
+    });
+
+  } catch (error) {
+    console.error('❌ Error during seeding:', error);
+  } finally {
+    await db.$disconnect();
+  }
+}
+
+seed();

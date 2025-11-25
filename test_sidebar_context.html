@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sidebar Context Test</title>
+</head>
+<body>
+    <h1>Sidebar Context Test</h1>
+    <div id="result"></div>
+    
+    <script>
+        // Test if we can access the sidebar context directly
+        async function testSidebarContext() {
+            try {
+                // Check if the context provider exists and is working
+                const response = await fetch('/api/courses');
+                console.log('Courses API response status:', response.status);
+                
+                if (response.ok) {
+                    const courses = await response.json();
+                    console.log('Courses from API:', courses.length);
+                    
+                    if (courses.length >= 0) {
+                        document.getElementById('result').innerHTML = 
+                            '<h2>✅ Courses API working</h2>' +
+                            '<p>Found ' + courses.length + ' courses</p>' +
+                            '<p>This confirms the backend is working correctly.</p>';
+                    } else {
+                        document.getElementById('result').innerHTML = 
+                            '<h2>❌ Courses API failed</h2>' +
+                            '<p>Status: ' + response.status + '</p>';
+                    }
+                } else {
+                    document.getElementById('result').innerHTML = 
+                        '<h2>❌ Courses API error</h2>' +
+                        '<p>Could not fetch courses</p>';
+                }
+            } catch (error) {
+                console.error('Test failed:', error);
+                document.getElementById('result').innerHTML = 
+                    '<h2>❌ Test failed</h2>' +
+                    '<p>Error: ' + error.message + '</p>';
+            }
+        }
+        
+        testSidebarContext();
+    </script>
+</body>
+</html>

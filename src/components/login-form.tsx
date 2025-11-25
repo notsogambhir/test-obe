@@ -250,7 +250,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('admin@obeportal.com', 'password123', 'CUIET')}
+                  onClick={() => handleQuickLogin('admin@obeportal.com', 'admin123', 'CUIET')}
                   className="text-xs"
                 >
                   Admin
@@ -259,7 +259,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('university@obeportal.com', 'password123', 'CUIET')}
+                  onClick={() => handleQuickLogin('university@obeportal.com', 'university123', 'CUIET')}
                   className="text-xs"
                 >
                   University
@@ -268,7 +268,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('cse@obeportal.com', 'password123', 'CUIET')}
+                  onClick={() => handleQuickLogin('cse@obeportal.com', 'department123', 'CUIET')}
                   className="text-xs"
                 >
                   Dept Head (CSE)
@@ -277,7 +277,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('business@obeportal.com', 'password123', 'CBS')}
+                  onClick={() => handleQuickLogin('business@obeportal.com', 'department123', 'CBS')}
                   className="text-xs"
                 >
                   Dept Head (CBS)
@@ -286,7 +286,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('teacher2@obeportal.com', 'password123', 'CBS')}
+                  onClick={() => handleQuickLogin('teacher2@obeportal.com', 'teacher123', 'CBS')}
                   className="text-xs"
                 >
                   Teacher (BBA)
@@ -295,7 +295,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('teacher1@obeportal.com', 'password123', 'CUIET')}
+                  onClick={() => handleQuickLogin('teacher1@obeportal.com', 'teacher123', 'CUIET')}
                   className="text-xs"
                 >
                   Teacher (ME)
@@ -304,7 +304,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('pc.bba@obeportal.com', 'password123', 'CBS')}
+                  onClick={() => handleQuickLogin('pc.bba@obeportal.com', 'coordinator123', 'CBS')}
                   className="text-xs"
                 >
                   Program Coord (BBA)
@@ -313,7 +313,7 @@ export function LoginForm() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => handleQuickLogin('pc.beme@obeportal.com', 'password123', 'CUIET')}
+                  onClick={() => handleQuickLogin('pc.beme@obeportal.com', 'coordinator123', 'CUIET')}
                   className="text-xs"
                 >
                   Program Coord (ME)

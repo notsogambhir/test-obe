@@ -4,11 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, Trash2, AlertTriangle, Edit, ChevronDown, ChevronRight, Loader2 } from 'lucide-react';
+import { BookOpen, Trash2, AlertTriangle, Edit, ChevronDown, ChevronRight, Loader2, Plus } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { CourseEditModal } from '@/components/course-edit-modal';
+import { CourseCreation } from '@/components/course-creation';
 import { useSidebarContext } from '@/contexts/sidebar-context';
 import {
   AlertDialog,
@@ -268,6 +269,8 @@ export function CourseManagementAdmin({ user }: { user: User }) {
   const [deletingCourseId, setDeletingCourseId] = useState<string | undefined>(undefined);
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchCourses = async () => {
     try {
@@ -318,7 +321,7 @@ export function CourseManagementAdmin({ user }: { user: User }) {
 
   useEffect(() => {
     fetchCourses();
-  }, [selectedBatch, user.collegeId]);
+  }, [selectedBatch, user.collegeId, refreshKey]);
 
   const handleUpdateStatus = async (courseId: string, newStatus: 'FUTURE' | 'ACTIVE' | 'COMPLETED') => {
     try {
@@ -424,6 +427,12 @@ export function CourseManagementAdmin({ user }: { user: User }) {
     setIsEditModalOpen(false);
   };
 
+  const handleCourseCreated = () => {
+    setRefreshKey(prev => prev + 1);
+    setShowCreateForm(false);
+    toast.success('Course created successfully!');
+  };
+
   // Group courses by status
   const activeCourses = courses.filter(course => course.status === 'ACTIVE');
   const futureCourses = courses.filter(course => course.status === 'FUTURE');
@@ -446,7 +455,24 @@ export function CourseManagementAdmin({ user }: { user: User }) {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Course Management - {user.role.replace('_', ' ')}</h1>
         </div>
+        {isHighLevelUser && (
+          <Button
+            onClick={() => setShowCreateForm(!showCreateForm)}
+            className="bg-red-600 hover:bg-red-700 text-white"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            {showCreateForm ? 'Hide Create Form' : 'Create Course'}
+          </Button>
+        )}
       </div>
+
+      {/* Course Creation Form */}
+      {showCreateForm && (
+        <CourseCreation 
+          user={user} 
+          onCourseCreated={handleCourseCreated}
+        />
+      )}
 
       {/* Active Courses */}
       <CourseCategory

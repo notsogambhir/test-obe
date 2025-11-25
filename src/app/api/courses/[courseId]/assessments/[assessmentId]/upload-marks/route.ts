@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/server-auth';
-import { canCreateCourse } from '@/lib/permissions';
+import { canCreateCourse, canManageCourse, canTeacherManageCourse } from '@/lib/permissions';
 import * as XLSX from 'xlsx';
 
 export async function POST(
@@ -9,10 +9,14 @@ export async function POST(
   { params }: { params: Promise<{ courseId: string, assessmentId: string }> }
 ) {
   try {
+    console.log('🚀 Upload marks API called');
     const resolvedParams = await params;
     const { courseId, assessmentId } = resolvedParams;
 
+    console.log('📋 Request params:', { courseId, assessmentId });
+
     if (!courseId || !assessmentId) {
+      console.log('❌ Missing params');
       return NextResponse.json(
         { error: 'Course ID and Assessment ID are required' },
         { status: 400 }
@@ -22,10 +26,25 @@ export async function POST(
     // Get authenticated user and check permissions
     const user = await getUserFromRequest(request);
     if (!user) {
+      console.log('❌ No user found');
       return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
     }
 
-    if (!canCreateCourse(user)) {
+    console.log('👤 User authenticated:', {
+      id: user.id,
+      email: user.email,
+      role: user.role
+    });
+
+    // Check permissions - admins/PCs can manage course, teachers can upload if assigned
+    let hasPermission = canManageCourse(user) || canCreateCourse(user);
+    
+    // For teachers, check if they're assigned to this course/section
+    if (user.role === 'TEACHER' && !hasPermission) {
+      hasPermission = await canTeacherManageCourse(user.id, courseId, assessment.sectionId || undefined);
+    }
+    
+    if (!hasPermission) {
       return NextResponse.json(
         { error: 'Insufficient permissions to upload marks' },
         { status: 403 }
@@ -78,12 +97,7 @@ export async function POST(
       );
     }
 
-    if (!assessment.sectionId) {
-      return NextResponse.json(
-        { error: 'Assessment must be associated with a section' },
-        { status: 400 }
-      );
-    }
+    // Note: sectionId is optional for assessments, allowing course-level assessments
 
     // Read Excel file
     const buffer = await file.arrayBuffer();
@@ -92,21 +106,31 @@ export async function POST(
     const worksheet = workbook.Sheets[sheetName];
     const data = XLSX.utils.sheet_to_json(worksheet);
 
+    console.log('📊 Excel file processed:', {
+      sheetName,
+      rowCount: data.length,
+      headers: data[0] || []
+    });
+
     if (data.length === 0) {
+      console.log('❌ Excel file is empty');
       return NextResponse.json(
         { error: 'Excel file is empty' },
         { status: 400 }
       );
     }
 
-    // Get students enrolled in the specific section for this assessment
+    // Get students enrolled in the course
+    // If assessment has a section, filter by that section, otherwise get all course students
     const enrollments = await db.enrollment.findMany({
       where: {
         courseId,
         isActive: true,
-        student: {
-          sectionId: assessment.sectionId
-        }
+        ...(assessment.sectionId && {
+          student: {
+            sectionId: assessment.sectionId
+          }
+        })
       },
       include: {
         student: {
@@ -121,6 +145,7 @@ export async function POST(
     });
 
     const studentMap = new Map();
+    console.log('📚 Found enrollments:', enrollments.length);
     enrollments.forEach(e => {
       studentMap.set(e.student.studentId, e.student);
       studentMap.set(e.student.email, e.student);
@@ -211,7 +236,7 @@ export async function POST(
             where: {
               questionId_sectionId_studentId_academicYear: {
                 questionId: mark.questionId,
-                sectionId: assessment.sectionId || '',
+                sectionId: assessment.sectionId || null,
                 studentId: result.studentId,
                 academicYear
               }
@@ -223,7 +248,7 @@ export async function POST(
             },
             create: {
               questionId: mark.questionId,
-              sectionId: assessment.sectionId || '',
+              sectionId: assessment.sectionId || null,
               studentId: result.studentId,
               obtainedMarks: mark.obtainedMarks,
               maxMarks: mark.maxMarks,

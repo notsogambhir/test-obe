@@ -22,6 +22,10 @@ export interface StudentCOAttainment {
   coCode: string;
   percentage: number;
   metTarget: boolean;
+  totalObtainedMarks: number;
+  totalMaxMarks: number;
+  attemptedQuestions: number;
+  totalQuestions: number;
 }
 
 export interface COAttainmentSummary {
@@ -48,7 +52,14 @@ export class COAttainmentService {
     studentId: string,
     coId: string,
     academicYear?: string
-  ): Promise<{ percentage: number; metTarget: boolean }> {
+  ): Promise<{ 
+    percentage: number; 
+    metTarget: boolean;
+    totalObtainedMarks?: number;
+    totalMaxMarks?: number;
+    attemptedQuestions?: number;
+    totalQuestions?: number;
+  }> {
     try {
       // Get all questions mapped to this CO
       const questions = await db.question.findMany({
@@ -74,7 +85,14 @@ export class COAttainmentService {
       const activeQuestions = questions.filter(q => q.assessment && q.assessment.isActive === true);
 
       if (activeQuestions.length === 0) {
-        return { percentage: 0, metTarget: false };
+        return { 
+          percentage: 0, 
+          metTarget: false,
+          totalObtainedMarks: 0,
+          totalMaxMarks: 0,
+          attemptedQuestions: 0,
+          totalQuestions: 0
+        };
       }
 
       const questionIds = activeQuestions.map(q => q.id);
@@ -90,15 +108,21 @@ export class COAttainmentService {
       });
 
       // Calculate total obtained and maximum marks
+      // CRITICAL FIX: Only include questions that student actually attempted
       let totalObtainedMarks = 0;
       let totalMaxMarks = 0;
+      let attemptedQuestions = 0;
 
       activeQuestions.forEach(question => {
         const studentMark = studentMarks.find(mark => mark.questionId === question.id);
-        if (studentMark) {
+        if (studentMark && studentMark.obtainedMarks !== null) {
+          // Student attempted this question (including if they scored 0)
           totalObtainedMarks += studentMark.obtainedMarks;
+          totalMaxMarks += question.maxMarks;
+          attemptedQuestions++;
         }
-        totalMaxMarks += question.maxMarks;
+        // CRITICAL: If studentMark is null (unattempted/absent), 
+        // we IGNORE this question entirely - don't add maxMarks to denominator
       });
 
       if (totalMaxMarks === 0) {
@@ -116,7 +140,14 @@ export class COAttainmentService {
       const targetPercentage = course?.targetPercentage || 50.0;
       const metTarget = percentage >= targetPercentage;
 
-      return { percentage, metTarget };
+      return { 
+        percentage, 
+        metTarget,
+        totalObtainedMarks,
+        totalMaxMarks,
+        attemptedQuestions,
+        totalQuestions: activeQuestions.length
+      };
     } catch (error) {
       console.error('Error calculating student CO attainment:', error);
       throw error;
@@ -303,7 +334,11 @@ export class COAttainmentService {
               coId: co.id,
               coCode: co.code,
               percentage: studentAttainment.percentage,
-              metTarget: studentAttainment.metTarget
+              metTarget: studentAttainment.metTarget,
+              totalObtainedMarks: studentAttainment.totalObtainedMarks || 0,
+              totalMaxMarks: studentAttainment.totalMaxMarks || 0,
+              attemptedQuestions: studentAttainment.attemptedQuestions || 0,
+              totalQuestions: studentAttainment.totalQuestions || 0
             });
           }
         }
@@ -354,8 +389,9 @@ export class COAttainmentService {
     try {
       await db.cOAttainment.upsert({
         where: {
-          courseId_coId_studentId_academicYear: {
+          courseId_sectionId_coId_studentId_academicYear: {
             courseId,
+            sectionId: '', // Course-level attainment, not section-specific
             coId,
             studentId,
             academicYear: academicYear || ''

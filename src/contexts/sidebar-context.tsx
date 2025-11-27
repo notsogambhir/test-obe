@@ -23,6 +23,7 @@ interface Batch {
   name: string;
   startYear: number;
   endYear: number;
+  programId: string;
 }
 
 interface SidebarContextType {

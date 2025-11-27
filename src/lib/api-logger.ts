@@ -15,7 +15,7 @@ function extractUserInfo(request: NextRequest) {
              request.headers.get('x-real-ip') || 
              'unknown';
 
-  return { userId, email, userAgent, ip };
+  return { userId: userId || undefined, email: email || undefined, userAgent, ip };
 }
 
 // Request logging middleware

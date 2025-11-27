@@ -76,7 +76,7 @@ export async function POST(
         );
       }
 
-      const coAttainments = [];
+      const coAttainments: any[] = [];
       const allStudentAttainments = [];
 
       for (const co of course.courseOutcomes) {
@@ -209,7 +209,7 @@ export async function GET(
         );
       }
 
-      const coAttainments = [];
+      const coAttainments: any[] = [];
       const allStudentAttainments = [];
 
       for (const co of course.courseOutcomes) {

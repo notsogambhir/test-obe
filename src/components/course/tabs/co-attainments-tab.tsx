@@ -83,7 +83,7 @@ export function COAttainmentsTab({ courseId, courseData }: COAttainmentsTabProps
 
   const fetchAttainments = async () => {
     try {
-      const response = await fetch(`/api/courses/${courseId}/attainments`);
+      const response = await fetch(`/api/courses/${courseId}/compliant-co-attainment`);
       if (!response.ok) {
         throw new Error('Failed to fetch attainments');
       }
@@ -95,7 +95,7 @@ export function COAttainmentsTab({ courseId, courseData }: COAttainmentsTabProps
         coCode: co.coCode,
         coDescription: co.coDescription,
         targetPercentage: co.targetPercentage,
-        attainedPercentage: co.attainedPercentage,
+        attainedPercentage: co.percentageMeetingTarget,
         studentsAttained: co.studentsAttained,
         totalStudents: co.totalStudents,
         attainmentLevel: co.attainmentLevel,
@@ -193,14 +193,13 @@ export function COAttainmentsTab({ courseId, courseData }: COAttainmentsTabProps
   const calculateAttainments = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/courses/${courseId}/attainments`, {
+      const response = await fetch(`/api/courses/${courseId}/compliant-co-attainment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           academicYear: '2024-25',
-          force: true, // Save results to database
         }),
       });
 
@@ -217,7 +216,7 @@ export function COAttainmentsTab({ courseId, courseData }: COAttainmentsTabProps
         coCode: co.coCode,
         coDescription: co.coDescription,
         targetPercentage: co.targetPercentage,
-        attainedPercentage: co.attainedPercentage,
+        attainedPercentage: co.percentageMeetingTarget,
         studentsAttained: co.studentsAttained,
         totalStudents: co.totalStudents,
         attainmentLevel: co.attainmentLevel,

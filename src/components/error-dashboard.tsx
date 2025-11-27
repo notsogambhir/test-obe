@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -195,7 +195,7 @@ export function ErrorDashboard() {
   };
 
   const getContextIcon = (context: string) => {
-    const icons: Record<string, JSX.Element> = {
+    const icons: Record<string, React.ReactElement> = {
       auth: <Shield className="h-4 w-4" />,
       database: <Database className="h-4 w-4" />,
       api_error: <Server className="h-4 w-4" />,
@@ -428,7 +428,7 @@ export function ErrorDashboard() {
                 </Alert>
               ) : (
                 <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {stats.recentErrors.map((log, index) => (
+                  {stats?.recentErrors.map((log, index) => (
                     <div key={index} className="border-l-4 border-l-red-500 pl-4 py-2">
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant={getLevelColor(log.level)}>
@@ -540,7 +540,7 @@ export function ErrorDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {stats.topErrors.map((error, index) => (
+                    {stats?.topErrors.map((error, index) => (
                       <TableRow key={index}>
                         <TableCell className="font-medium max-w-xs truncate">
                           {error.message}

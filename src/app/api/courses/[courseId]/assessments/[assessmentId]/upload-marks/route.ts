@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/server-auth';
 import { canCreateCourse, canManageCourse, canTeacherManageCourse } from '@/lib/permissions';
-import * as XLSX from 'xlsx';
+import { CompliantCOAttainmentCalculator } from '@/lib/compliant-co-attainment-calculator';
 
 export async function POST(
   request: NextRequest,
@@ -36,20 +36,10 @@ export async function POST(
       role: user.role
     });
 
-    // Check permissions - admins/PCs can manage course, teachers can upload if assigned
+    // Check permissions - admins/PCs can manage course, teachers need to be assigned
     let hasPermission = canManageCourse(user) || canCreateCourse(user);
     
-    // For teachers, check if they're assigned to this course/section
-    if (user.role === 'TEACHER' && !hasPermission) {
-      hasPermission = await canTeacherManageCourse(user.id, courseId, assessment.sectionId || undefined);
-    }
-    
-    if (!hasPermission) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions to upload marks' },
-        { status: 403 }
-      );
-    }
+    // For teachers, we'll check assignment after fetching the assessment
 
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -62,9 +52,9 @@ export async function POST(
     }
 
     // Validate file type
-    if (!file.name.endsWith('.xlsx') && !file.name.endsWith('.xls')) {
+    if (!file.name.endsWith('.csv')) {
       return NextResponse.json(
-        { error: 'Only Excel files (.xlsx, .xls) are supported' },
+        { error: 'Only CSV files (.csv) are supported' },
         { status: 400 }
       );
     }
@@ -97,25 +87,53 @@ export async function POST(
       );
     }
 
+    // Now check teacher permissions after we have the assessment
+    if (user.role === 'TEACHER' && !hasPermission) {
+      hasPermission = await canTeacherManageCourse(user.id, courseId, assessment.sectionId || undefined);
+    }
+    
+    if (!hasPermission) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to upload marks' },
+        { status: 403 }
+      );
+    }
+
     // Note: sectionId is optional for assessments, allowing course-level assessments
 
-    // Read Excel file
+    // Read CSV file
     const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'buffer' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const data = XLSX.utils.sheet_to_json(worksheet);
+    const text = new TextDecoder().decode(buffer);
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    if (lines.length === 0) {
+      return NextResponse.json(
+        { error: 'CSV file is empty' },
+        { status: 400 }
+      );
+    }
 
-    console.log('📊 Excel file processed:', {
-      sheetName,
+    // Parse CSV headers
+    const headers = lines[0].split(',').map(h => h.trim());
+    const data = lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim());
+      const row: any = {};
+      headers.forEach((header, index) => {
+        row[header] = values[index] || '';
+      });
+      return row;
+    });
+
+    console.log('📊 CSV file processed:', {
+      headers,
       rowCount: data.length,
-      headers: data[0] || []
+      firstRow: data[0] || null
     });
 
     if (data.length === 0) {
-      console.log('❌ Excel file is empty');
+      console.log('❌ CSV file is empty');
       return NextResponse.json(
-        { error: 'Excel file is empty' },
+        { error: 'CSV file is empty' },
         { status: 400 }
       );
     }
@@ -189,15 +207,33 @@ export async function POST(
       const questionMarks: any[] = [];
       for (let j = 0; j < assessment.questions.length; j++) {
         const question = assessment.questions[j];
-        const markKey = `Q${j + 1}`;
-        const altMarkKey = `Question ${j + 1}`;
-        const mark = row[markKey] || row[altMarkKey] || 0;
+        const maxMarks = question.maxMarks;
         
-        const obtainedMarks = parseInt(mark) || 0;
+        // Try different possible column names for the question
+        const possibleKeys = [
+          `Q${j + 1}`,
+          `Q${j + 1} (${maxMarks} marks)`,
+          `Question ${j + 1}`,
+          `Question ${j + 1} (${maxMarks} marks)`,
+          `Q${j + 1}(${maxMarks} marks)`,
+          `Question ${j + 1}(${maxMarks} marks)`
+        ];
         
-        // Validate marks
-        if (obtainedMarks < 0 || obtainedMarks > question.maxMarks) {
-          errors.push(`Row ${i + 1}: Invalid marks for ${markKey}. Should be between 0 and ${question.maxMarks}`);
+        let mark = undefined;
+        for (const key of possibleKeys) {
+          if (row[key] !== undefined && row[key] !== '') {
+            mark = row[key];
+            break;
+          }
+        }
+        
+        // Keep mark as null if empty, otherwise parse as number
+        const obtainedMarks = mark !== undefined && mark !== '' && mark !== null ? 
+          (isNaN(Number(mark)) ? 0 : Number(mark)) : null;
+        
+        // Validate marks (only validate if marks are not null)
+        if (obtainedMarks !== null && (obtainedMarks < 0 || obtainedMarks > question.maxMarks)) {
+          errors.push(`Row ${i + 1}: Invalid marks for question ${j + 1}. Should be between 0 and ${question.maxMarks}`);
           continue;
         }
 
@@ -236,7 +272,7 @@ export async function POST(
             where: {
               questionId_sectionId_studentId_academicYear: {
                 questionId: mark.questionId,
-                sectionId: assessment.sectionId || null,
+                sectionId: assessment.sectionId || '',
                 studentId: result.studentId,
                 academicYear
               }
@@ -248,7 +284,7 @@ export async function POST(
             },
             create: {
               questionId: mark.questionId,
-              sectionId: assessment.sectionId || null,
+              sectionId: assessment.sectionId || '',
               studentId: result.studentId,
               obtainedMarks: mark.obtainedMarks,
               maxMarks: mark.maxMarks,
@@ -259,6 +295,17 @@ export async function POST(
         }
       }
     });
+
+    // Trigger CO attainment calculation after marks upload
+    try {
+      console.log('🔄 Triggering CO attainment calculation after marks upload...');
+      await CompliantCOAttainmentCalculator.batchSaveCOAttainments(courseId, academicYear);
+      console.log('✅ CO attainment calculation completed successfully');
+    } catch (coError) {
+      console.error('⚠️ Error calculating CO attainment after marks upload:', coError);
+      // Don't fail the marks upload if CO calculation fails
+      // Log the error but continue with success response
+    }
 
     return NextResponse.json({
       message: 'Marks uploaded successfully',

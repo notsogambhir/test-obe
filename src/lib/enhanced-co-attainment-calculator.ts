@@ -146,7 +146,7 @@ export class EnhancedCOAttainmentCalculator {
         const question = coQuestionMappings.find(m => m.questionId === mark.questionId);
         if (!question) continue;
 
-        const assessment = question.assessment;
+        const assessment = question.question.assessment;
         
         if (!assessmentGroups.has(assessment.id)) {
           assessmentGroups.set(assessment.id, {
@@ -159,13 +159,19 @@ export class EnhancedCOAttainmentCalculator {
         }
 
         const group = assessmentGroups.get(assessment.id);
-        group.questions.push(question);
-        group.obtainedMarks += mark.obtainedMarks;
-        group.maxMarks += question.maxMarks;
+        if (group) {
+          group.questions.push(question);
+          if (mark.obtainedMarks !== null) {
+            group.obtainedMarks += mark.obtainedMarks;
+          }
+          group.maxMarks += question.question.maxMarks;
+        }
         
-        totalObtainedMarks += mark.obtainedMarks;
-        totalMaxMarks += mark.maxMarks;
-        attemptedQuestions++;
+        if (mark.obtainedMarks !== null) {
+          totalObtainedMarks += mark.obtainedMarks;
+          totalMaxMarks += mark.maxMarks; // This is correct - using student mark's maxMarks
+          attemptedQuestions++;
+        }
       }
 
       // Calculate weighted scores for each assessment
@@ -415,11 +421,15 @@ export class EnhancedCOAttainmentCalculator {
         return null;
       }
 
-      // Get all sections for this course
+      // Get all sections for this course via batches
       const sections = await db.section.findMany({
         where: {
-          course: {
-            courseId: courseId
+          batch: {
+            courses: {
+              some: {
+                id: courseId
+              }
+            }
           }
         }
       });
@@ -505,7 +515,7 @@ export class EnhancedCOAttainmentCalculator {
         coCode: co.code,
         coDescription: co.description,
         totalStudents,
-        studentsMeetingTarget,
+        studentsMeetingTarget: totalStudentsMeetingTarget,
         percentageMeetingTarget: Math.round(percentageMeetingTarget * 100) / 100,
         attainmentLevel,
         targetPercentage: course.targetPercentage,

@@ -228,7 +228,7 @@ class Logger {
   }): void {
     const entry = this.createLogEntry(LogLevel.ERROR, message, {
       ...options,
-      stack: options.error?.stack,
+      stack: options?.error?.stack,
     });
     this.log(entry);
   }
@@ -281,7 +281,6 @@ class Logger {
         statusCode: options?.statusCode,
         requestBody: options?.requestBody,
         responseBody: options?.responseBody,
-        ...options?.metadata,
       },
     });
   }
@@ -299,7 +298,6 @@ class Logger {
         action,
         email: options?.email,
         ip: options?.ip,
-        ...options?.metadata,
       },
     });
   }
@@ -317,7 +315,6 @@ class Logger {
         operation,
         query: options?.query,
         table: options?.table,
-        ...options?.metadata,
       },
     });
   }
@@ -416,4 +413,3 @@ export const logInfo = (message: string, options?: Parameters<typeof logger.info
 export const logDebug = (message: string, options?: Parameters<typeof logger.debug>[1]) => 
   logger.debug(message, options);
 
-export { LogLevel, type LogEntry, type LoggerConfig };

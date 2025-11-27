@@ -97,6 +97,7 @@ async function handleSectionUpdate(
     console.log('User role:', user?.role);
     console.log('User college ID:', user?.collegeId);
     console.log('Student college ID:', student?.collegeId);
+    console.log('Student program college ID:', student?.batch?.program?.collegeId);
 
     // Allow ADMIN and UNIVERSITY users directly
     if (['ADMIN', 'UNIVERSITY'].includes(user?.role)) {
@@ -105,7 +106,19 @@ async function handleSectionUpdate(
       console.log('🔍 Department access - checking college permissions');
 
       // Check if department user has access to this student's college
-      if (student?.collegeId !== user?.collegeId) {
+      // If student has a collegeId, it must match
+      // If student has no collegeId, check if their program belongs to department user's college
+      let hasAccess = false;
+      
+      if (student?.collegeId) {
+        hasAccess = student.collegeId === user?.collegeId;
+        console.log('Student has collegeId, checking direct match:', hasAccess);
+      } else if (student?.batch?.program?.collegeId) {
+        hasAccess = student.batch.program.collegeId === user?.collegeId;
+        console.log('Student has no collegeId, checking program college:', hasAccess);
+      }
+
+      if (!hasAccess) {
         console.log('❌ Department access denied - college mismatch');
         return NextResponse.json({ error: 'Access denied - insufficient college permissions' }, { status: 403 });
       }
@@ -151,7 +164,19 @@ async function handleSectionUpdate(
 
       // Additional permission check for department users
       if (user.role === 'DEPARTMENT') {
-        if (section.batch.program.collegeId !== user.collegeId) {
+        let hasSectionAccess = false;
+        
+        // Check if section's program college matches department user's college
+        if (section.batch.program.collegeId === user.collegeId) {
+          hasSectionAccess = true;
+        }
+        
+        // If student has a collegeId, it must also match
+        if (student?.collegeId && student.collegeId !== user.collegeId) {
+          hasSectionAccess = false;
+        }
+        
+        if (!hasSectionAccess) {
           return NextResponse.json({ error: 'Access denied - section belongs to different college' }, { status: 403 });
         }
       }

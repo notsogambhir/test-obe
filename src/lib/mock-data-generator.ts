@@ -108,7 +108,7 @@ export class MockDataGenerator {
       }
     ];
 
-    const createdColleges = [];
+    const createdColleges: any[] = [];
     for (const college of colleges) {
       const created = await db.college.create({
         data: college
@@ -168,7 +168,7 @@ export class MockDataGenerator {
       }
     ];
 
-    const createdPrograms = [];
+    const createdPrograms: any[] = [];
     for (const college of colleges) {
       // Assign relevant programs based on college type
       const relevantPrograms = college.type === 'ENGINEERING' 
@@ -196,7 +196,7 @@ export class MockDataGenerator {
    */
   private static async createBatches(programs: any[]) {
     const currentYear = new Date().getFullYear();
-    const createdBatches = [];
+    const createdBatches: any[] = [];
 
     for (const program of programs) {
       // Create multiple batches per program
@@ -238,7 +238,7 @@ export class MockDataGenerator {
       'Shukla', 'Tripathi', 'Chaturvedi', 'Bhat', 'Joshi', 'Mehta'
     ];
 
-    const createdStudents = [];
+    const createdStudents: any[] = [];
     let studentCounter = 1;
 
     for (const batch of batches) {
@@ -337,7 +337,7 @@ export class MockDataGenerator {
       ]
     };
 
-    const createdCourses = [];
+    const createdCourses: any[] = [];
 
     for (const batch of batches) {
       const programCode = batch.program.code;
@@ -414,7 +414,7 @@ export class MockDataGenerator {
       ]
     };
 
-    const createdPOs = [];
+    const createdPOs: any[] = [];
 
     for (const program of programs) {
       const poSet = poTemplates[program.type as keyof typeof poTemplates] || poTemplates['ENGINEERING'];
@@ -465,7 +465,7 @@ export class MockDataGenerator {
       ]
     };
 
-    const createdCOs = [];
+    const createdCOs: any[] = [];
 
     for (const course of courses) {
       const courseCOs = coTemplates[course.code as keyof typeof coTemplates] || [];
@@ -488,7 +488,7 @@ export class MockDataGenerator {
    * Create CO-PO mappings
    */
   private static async createCOPOMappings(courses: any[], cos: any[], pos: any[]) {
-    const createdMappings = [];
+    const createdMappings: any[] = [];
 
     for (const course of courses) {
       const courseCOs = cos.filter(co => co.courseId === course.id);
@@ -578,11 +578,14 @@ export class MockDataGenerator {
     }
 
     const allUsers = [...adminUsers, ...programCoordinators];
-    const createdUsers = [];
+    const createdUsers: any[] = [];
 
     for (const user of allUsers) {
       const created = await db.user.create({
-        data: user
+        data: {
+          ...user,
+          role: user.role as UserRole
+        }
       });
       createdUsers.push(created);
     }
@@ -594,7 +597,7 @@ export class MockDataGenerator {
    * Create Enrollments
    */
   private static async createEnrollments(students: any[], courses: any[]) {
-    const createdEnrollments = [];
+    const createdEnrollments: any[] = [];
 
     for (const course of courses) {
       const batchStudents = students.filter(student => student.batchId === course.batchId);

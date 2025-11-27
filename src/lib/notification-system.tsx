@@ -236,7 +236,7 @@ class ErrorNotificationSystem {
 
     desktopNotif.onclick = () => {
       window.focus();
-      if (notification.actions?.length > 0) {
+      if (notification.actions && notification.actions.length > 0) {
         notification.actions[0].action();
       }
     };

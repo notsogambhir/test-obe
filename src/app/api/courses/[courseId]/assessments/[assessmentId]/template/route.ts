@@ -82,20 +82,16 @@ export async function GET(
     }
 
     // Get students enrolled in the specific section for this assessment
-    if (!assessment.sectionId) {
-      return NextResponse.json(
-        { error: 'Assessment must be associated with a section' },
-        { status: 400 }
-      );
-    }
-
+      // Handle both section-level and course-level assessments
     const enrollments = await db.enrollment.findMany({
       where: {
         courseId,
         isActive: true,
-        student: {
-          sectionId: assessment.sectionId
-        }
+        ...(assessment.sectionId ? {
+          student: {
+            sectionId: assessment.sectionId
+          }
+        } : {}), // For course-level assessments, get all students in course
       },
       include: {
         student: {
@@ -116,7 +112,7 @@ export async function GET(
 
     if (enrollments.length === 0) {
       return NextResponse.json(
-        { error: 'No students enrolled in this section for this assessment' },
+        { error: 'No students enrolled for this assessment' },
         { status: 404 }
       );
     }

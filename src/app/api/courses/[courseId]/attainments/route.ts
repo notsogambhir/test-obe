@@ -69,7 +69,7 @@ async function getStoredAttainments(courseId: string, academicYear?: string) {
     }, {} as any);
 
     // Calculate final statistics for each CO
-    const coAttainmentResults = Object.values(coGroups).map(group => {
+    const coAttainmentResults = Object.values(coGroups).map((group: any) => {
       const averagePercentage = group.students.length > 0 
         ? group.students.reduce((sum: number, s: any) => sum + s.percentage, 0) / group.students.length 
         : 0;

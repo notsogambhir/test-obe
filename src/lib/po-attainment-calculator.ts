@@ -321,6 +321,7 @@ export class POAttainmentCalculator {
 
   /**
    * Calculate individual PO attainment based on NBA guidelines
+   * Following the correct formula: Direct PO = ∑(CO_Attainment × Mapping_Level) / ∑Mapping_Levels
    */
   private static async calculateIndividualPOAttainment(
     po: any,
@@ -328,7 +329,10 @@ export class POAttainmentCalculator {
     programId: string
   ): Promise<POAttainment | null> {
     try {
-      // Get all CO-PO mappings for this PO across all courses in the program
+      console.log(`🎯 Calculating PO attainment for ${po.code} using correct NBA formula`);
+      console.log(`📋 Courses available: ${courses.length}`);
+      
+      // Get all CO-PO mappings for this PO across all courses
       const allMappings = courses.flatMap(course =>
         course.coPOMappings?.filter(mapping => mapping.poId === po.id) || []
       );
@@ -351,38 +355,67 @@ export class POAttainmentCalculator {
         };
       }
 
-      // Get unique COs mapped to this PO
-      const mappedCOs = new Set(allMappings.map(mapping => mapping.coId));
-      const totalCOs = new Set(courses.flatMap(course => course.courseOutcomes?.map(co => co.id) || []));
+      // Calculate Direct PO Attainment using the correct formula
+      // Direct PO = ∑(CO_Attainment × Mapping_Level) / ∑Mapping_Levels
+      let numerator = 0;
+      let denominator = 0;
+      const mappedCOsSet = new Set<string>();
 
-      // Step 1: Calculate average mapping level for this PO
+      for (const mapping of allMappings) {
+        try {
+          // Get CO attainment for this specific CO from the course
+          const coAttainment = await this.getCOAttainmentForCourse(mapping.coId, mapping.courseId);
+          
+          if (coAttainment !== null) {
+            const contribution = coAttainment * mapping.level;
+            numerator += contribution;
+            denominator += mapping.level;
+            mappedCOsSet.add(mapping.coId);
+            
+            console.log(`📊 CO ${mapping.co?.code || mapping.coId}: Attainment=${coAttainment.toFixed(2)}, Mapping=${mapping.level}, Contribution=${contribution.toFixed(2)}`);
+          }
+        } catch (error) {
+          console.warn(`⚠️ Could not get attainment for CO ${mapping.coId} in course ${mapping.courseId}:`, error);
+          // Skip this CO if we can't get its attainment
+        }
+      }
+
+      // Calculate direct PO attainment
+      const directPOAttainment = denominator > 0 ? numerator / denominator : 0;
+      
+      // Calculate indirect PO attainment (will be weighted at 0% for program-outcomes page)
+      // For now, use a simple approach: average of direct attainment with some adjustment
+      // In a full implementation, this would come from student surveys, alumni surveys, employer surveys
+      const indirectPOAttainment = await this.calculateIndirectAttainment(po.id, courses);
+      
+      // Apply weights (100% direct, 0% indirect for program-outcomes page)
+      const directWeight = 1.0;
+      const indirectWeight = 0.0;
+      
+      // Final PO Attainment = (Direct_PO × 1.0) + (Indirect_PO × 0.0) = Direct_PO (100% direct for program-outcomes page)
+      const finalPOAttainment = (directPOAttainment * directWeight) + (indirectPOAttainment * indirectWeight);
+
+      // Get total COs for coverage calculation
+      const totalCOs = new Set(courses.flatMap(course => course.courseOutcomes?.map(co => co.id) || []));
+      const coCoverageFactor = totalCOs.size > 0 ? mappedCOsSet.size / totalCOs.size : 0;
+
+      // Calculate average mapping level for display purposes
       const mappingLevels = allMappings.map(mapping => mapping.level);
       const avgMappingLevel = mappingLevels.length > 0 
         ? mappingLevels.reduce((sum, level) => sum + level, 0) / mappingLevels.length 
         : 0;
 
-      // Step 2: Convert mapping level to attainment percentage
-      // Level 3 = 100%, Level 2 = 75%, Level 1 = 50%
-      let baseAttainment = 0;
-      if (avgMappingLevel >= 3) baseAttainment = 100;
-      else if (avgMappingLevel >= 2) baseAttainment = 75;
-      else if (avgMappingLevel >= 1) baseAttainment = 50;
-
-      // Step 3: Apply CO coverage factor
-      const coCoverageFactor = totalCOs.size > 0 
-        ? mappedCOs.size / totalCOs.size 
-        : 0;
-
-      // Step 4: Calculate final PO attainment
-      const actualAttainment = Math.round(baseAttainment * coCoverageFactor);
-
-      // Step 5: Determine attainment level
+      // Convert attainment percentage to level status (using 0-3 scale as per PRD)
       const targetAttainment = 60; // NBA standard
       let status: 'Not Attained' | 'Level 1' | 'Level 2' | 'Level 3' = 'Not Attained';
       
-      if (actualAttainment >= 80) status = 'Level 3';
-      else if (actualAttainment >= 65) status = 'Level 2';
-      else if (actualAttainment >= targetAttainment) status = 'Level 1';
+      // Convert percentage to 0-3 scale for status determination
+      const attainmentLevel = (finalPOAttainment / 100) * 3;
+      if (attainmentLevel >= 2.5) status = 'Level 3';
+      else if (attainmentLevel >= 2.0) status = 'Level 2';
+      else if (attainmentLevel >= 1.5) status = 'Level 1';
+
+      console.log(`✅ PO ${po.code}: Direct=${directPOAttainment.toFixed(2)} (100% weight), Final=${finalPOAttainment.toFixed(2)}, Status=${status}`);
 
       return {
         poId: po.id,
@@ -390,17 +423,114 @@ export class POAttainmentCalculator {
         poDescription: po.description,
         programId,
         targetAttainment,
-        actualAttainment,
+        actualAttainment: Math.round(finalPOAttainment * 100) / 100, // Round to 2 decimal places
         coCount: totalCOs.size,
-        mappedCOs: mappedCOs.size,
+        mappedCOs: mappedCOsSet.size,
         avgMappingLevel: Math.round(avgMappingLevel * 10) / 10,
         status,
         coCoverageFactor: Math.round(coCoverageFactor * 100),
-        baseAttainment
+        baseAttainment: Math.round(directPOAttainment * 100) / 100 // Store direct attainment as base
       };
     } catch (error) {
       console.error(`❌ Error calculating PO attainment for ${po.code}:`, error);
       return null;
+    }
+  }
+
+  /**
+   * Get CO attainment for a specific CO in a course
+   */
+  private static async getCOAttainmentForCourse(
+    coId: string,
+    courseId: string
+  ): Promise<number | null> {
+    try {
+      // Use the COAttainmentService to get the actual CO attainment
+      const { COAttainmentService } = await import('@/lib/co-attainment');
+      
+      // Calculate CO attainment for this course
+      const result = await COAttainmentService.calculateCOAttainment(courseId, coId);
+      
+      if (result) {
+        // Convert attainment level to percentage
+        // Level 3 = 100%, Level 2 = 75%, Level 1 = 50%, Level 0 = 0%
+        let attainmentPercentage = 0;
+        if (result.attainmentLevel >= 3) attainmentPercentage = 100;
+        else if (result.attainmentLevel >= 2) attainmentPercentage = 75;
+        else if (result.attainmentLevel >= 1) attainmentPercentage = 50;
+        
+        return attainmentPercentage;
+      }
+      
+      return null;
+    } catch (error) {
+      console.warn(`⚠️ Error getting CO attainment for CO ${coId} in course ${courseId}:`, error);
+      return null;
+    }
+  }
+
+  /**
+   * Calculate indirect PO attainment based on survey data or estimation
+   */
+  private static async calculateIndirectAttainment(
+    poId: string,
+    courses: any[]
+  ): Promise<number> {
+    try {
+      // In a full implementation, this would query survey tables like:
+      // - Student Exit Surveys
+      // - Alumni Surveys  
+      // - Employer Surveys
+      // - Parent Feedback
+      
+      // For now, we'll use a simple estimation approach:
+      // 1. Get average direct attainment across all POs for this program
+      // 2. Apply a factor to simulate indirect assessment
+      
+      // Simple heuristic: indirect attainment is typically 10-15% lower than direct
+      // This accounts for the fact that surveys often show slightly different perspectives
+      
+      // Get all POs for this program to calculate average
+      const programId = courses[0]?.batch?.programId;
+      if (!programId) return 2.0; // Default fallback
+      
+      const pos = await db.pO.findMany({
+        where: { programId, isActive: true }
+      });
+      
+      if (pos.length === 0) return 2.0; // Default fallback
+      
+      // Calculate average direct attainment for all POs (simple estimation)
+      let totalDirectAttainment = 0;
+      let poCount = 0;
+      
+      for (const po of pos) {
+        // Get mappings for this PO
+        const allMappings = courses.flatMap(course =>
+          course.coPOMappings?.filter(mapping => mapping.poId === po.id) || []
+        );
+        
+        if (allMappings.length > 0) {
+          // Simple estimation: use average mapping level as proxy for attainment
+          const avgMappingLevel = allMappings.reduce((sum, m) => sum + m.level, 0) / allMappings.length;
+          totalDirectAttainment += avgMappingLevel;
+          poCount++;
+        }
+      }
+      
+      const averageDirectAttainment = poCount > 0 ? totalDirectAttainment / poCount : 2.0;
+      
+      // Apply indirect factor (typically 85-90% of direct attainment)
+      const indirectFactor = 0.85; // Conservative estimation
+      const indirectAttainment = Math.max(1.0, averageDirectAttainment * indirectFactor);
+      
+      console.log(`📋 Indirect attainment for PO ${poId}: ${indirectAttainment.toFixed(2)} (based on avg direct: ${averageDirectAttainment.toFixed(2)})`);
+      
+      return Math.min(3.0, Math.max(0.0, indirectAttainment));
+      
+    } catch (error) {
+      console.warn(`⚠️ Error calculating indirect attainment for PO ${poId}:`, error);
+      return 2.0; // Default fallback
     }
   }
 
@@ -543,6 +673,7 @@ export class POAttainmentCalculator {
           poId: po.id,
           poCode: po.code,
           poDescription: po.description,
+          programId: po.programId, // Add missing programId
           targetAttainment,
           actualAttainment,
           coCount: course.courseOutcomes.length,

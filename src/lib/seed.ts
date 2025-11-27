@@ -153,7 +153,7 @@ async function seed() {
 
     // Create Sections
     console.log('🏫 Creating sections...');
-    const sections = [];
+    const sections: any[] = [];
     for (const batch of batches) {
       const sectionNames = ['A', 'B', 'C'];
       for (const sectionName of sectionNames) {
@@ -329,7 +329,7 @@ async function seed() {
 
     // Create Courses (EXTENDED)
     console.log('📚 Creating courses...');
-    const courses = [];
+    const courses: any[] = [];
     for (const batch of batches) {
       const program = programs.find(p => p.id === batch.programId);
       const coursesPerBatch = 3;
@@ -355,7 +355,7 @@ async function seed() {
 
     // Create Course Outcomes (COs)
     console.log('🎯 Creating Course Outcomes...');
-    const cos = [];
+    const cos: any[] = [];
     for (const course of courses) {
       for (let i = 1; i <= 2; i++) {
         const co = await db.cO.create({
@@ -373,7 +373,7 @@ async function seed() {
 
     // Create Enrollments
     console.log('📝 Creating enrollments...');
-    const enrollments = [];
+    const enrollments: any[] = [];
     for (const user of users.filter(u => u.role === 'STUDENT')) {
       const batchCourses = courses.filter(c => {
         const courseBatch = batches.find(b => b.id === c.batchId);
@@ -395,7 +395,7 @@ async function seed() {
 
     // Create Assessments
     console.log('📋 Creating assessments...');
-    const assessments = [];
+    const assessments: any[] = [];
     for (const course of courses) {
       const courseSections = sections.filter(s => {
         const courseBatch = batches.find(b => b.id === course.batchId);
@@ -428,7 +428,7 @@ async function seed() {
 
     // Create Questions
     console.log('❓ Creating questions...');
-    const questions = [];
+    const questions: any[] = [];
     for (const assessment of assessments) {
       const questionCount = 2;
       for (let i = 1; i <= questionCount; i++) {
@@ -447,7 +447,7 @@ async function seed() {
 
     // Create CO-PO Mappings
     console.log('🔗 Creating CO-PO mappings...');
-    const coPOMappings = [];
+    const coPOMappings: any[] = [];
     for (const course of courses) {
       const courseCOs = cos.filter(co => co.courseId === course.id);
       const batch = batches.find(b => b.id === course.batchId);
@@ -472,7 +472,7 @@ async function seed() {
 
     // Create Question-CO Mappings
     console.log('📊 Creating Question-CO mappings...');
-    const questionCOMappings = [];
+    const questionCOMappings: any[] = [];
     for (const question of questions) {
       const assessment = assessments.find(a => a.id === question.assessmentId);
       if (assessment) {
@@ -493,7 +493,7 @@ async function seed() {
 
     // Create Student Marks (for first 10 students for performance)
     console.log('📈 Creating student marks...');
-    const studentMarks = [];
+    const studentMarks: any[] = [];
     const studentUsers = users.filter(u => u.role === 'STUDENT').slice(0, 10);
     
     for (const student of studentUsers) {
@@ -528,7 +528,7 @@ async function seed() {
 
     // Calculate CO Attainments
     console.log('🎯 Calculating CO attainments...');
-    const coAttainments = [];
+    const coAttainments: any[] = [];
     
     for (const student of studentUsers) {
       const studentEnrollments = enrollments.filter(e => e.studentId === student.id);
@@ -650,4 +650,5 @@ async function seed() {
   }
 }
 
-seed();
+// Export the seed function for external use
+export { seed };

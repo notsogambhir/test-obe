@@ -448,7 +448,7 @@ export function AssessmentsTab({ courseId, courseData }: AssessmentsTabProps) {
                         id="edit-assessment-name"
                         placeholder="e.g., Mid Term Examination"
                         value={editingAssessment.name}
-                        onChange={(e) => setEditingAssessment(prev => ({ ...prev, name: e.target.value }))}
+                        onChange={(e) => setEditingAssessment(prev => prev ? { ...prev, name: e.target.value } : null)}
                       />
                     </div>
                     <div className="space-y-2">
@@ -456,7 +456,7 @@ export function AssessmentsTab({ courseId, courseData }: AssessmentsTabProps) {
                       <Select
                         value={editingAssessment.type}
                         onValueChange={(value: 'exam' | 'quiz' | 'assignment' | 'project') => 
-                          setEditingAssessment(prev => ({ ...prev, type: value }))
+                          setEditingAssessment(prev => prev ? { ...prev, type: value } : null)
                         }
                       >
                         <SelectTrigger>
@@ -475,7 +475,7 @@ export function AssessmentsTab({ courseId, courseData }: AssessmentsTabProps) {
                       <Select
                         value={editingAssessment.sectionId || ''}
                         onValueChange={(value: string) => 
-                          setEditingAssessment(prev => ({ ...prev, sectionId: value }))
+                          setEditingAssessment(prev => prev ? { ...prev, sectionId: value } : null)
                         }
                       >
                         <SelectTrigger>
@@ -499,10 +499,10 @@ export function AssessmentsTab({ courseId, courseData }: AssessmentsTabProps) {
                         min="1"
                         max="1000"
                         value={editingAssessment.maxMarks}
-                        onChange={(e) => setEditingAssessment(prev => ({ 
+                        onChange={(e) => setEditingAssessment(prev => prev ? { 
                           ...prev, 
                           maxMarks: parseInt(e.target.value) || 100 
-                        }))}
+                        } : null)}
                       />
                     </div>
                     <div className="space-y-2">
@@ -514,10 +514,10 @@ export function AssessmentsTab({ courseId, courseData }: AssessmentsTabProps) {
                         max="100"
                         step="0.1"
                         value={editingAssessment.weightage}
-                        onChange={(e) => setEditingAssessment(prev => ({ 
+                        onChange={(e) => setEditingAssessment(prev => prev ? { 
                           ...prev, 
                           weightage: parseFloat(e.target.value) || 10 
-                        }))}
+                        } : null)}
                       />
                     </div>
                     <div className="flex gap-2 justify-end">

@@ -120,7 +120,8 @@ class ClientErrorTracker {
     
     window.fetch = async (...args) => {
       const startTime = Date.now();
-      const url = args[0] instanceof Request ? args[0].url : args[0];
+      const url = args[0] instanceof Request ? args[0].url : 
+                   args[0] instanceof URL ? args[0].toString() : args[0];
       const method = args[0] instanceof Request ? args[0].method : 'GET';
 
       try {
@@ -146,7 +147,6 @@ class ClientErrorTracker {
         return response;
       } catch (error) {
         logger.apiError(method, url, error, {
-          duration: Date.now() - startTime,
           requestBody: args[1]?.body,
         });
         throw error;
@@ -158,10 +158,10 @@ class ClientErrorTracker {
     const originalXHRSend = XMLHttpRequest.prototype.send;
 
     XMLHttpRequest.prototype.open = function(method: string, url: string | URL, ...args: any[]) {
-      this._method = method;
-      this._url = url.toString();
-      this._startTime = Date.now();
-      return originalXHROpen.apply(this, [method, url, ...args]);
+      (this as any)._method = method;
+      (this as any)._url = url.toString();
+      (this as any)._startTime = Date.now();
+      return originalXHROpen.apply(this, [method, url, ...args] as any);
     };
 
     XMLHttpRequest.prototype.send = function(this: XMLHttpRequest, body?: Document | BodyInit | null) {
@@ -174,18 +174,17 @@ class ClientErrorTracker {
             logger.apiError((this as any)._method, (this as any)._url, 
               new Error(`HTTP ${this.status}`), {
                 statusCode: this.status,
-                duration,
                 requestBody: body,
               });
           }
         }
         
         if (originalOnReadyStateChange) {
-          originalOnReadyStateChange.call(this);
+          originalOnReadyStateChange.call(this, new Event('readystatechange'));
         }
       };
 
-      return originalXHRSend.call(this, body);
+      return originalXHRSend.call(this, body as any);
     };
   }
 
@@ -203,8 +202,8 @@ class ClientErrorTracker {
           logger.performanceMetric('page_load', loadTime, {
             metadata: {
               domTime,
-              domContentLoaded: nav.domContentLoadedEventEnd - nav.navigationStart,
-              firstPaint: nav.responseStart - nav.navigationStart,
+              domContentLoaded: nav.domContentLoadedEventEnd - nav.fetchStart,
+              firstPaint: nav.responseStart - nav.fetchStart,
             },
           });
         }

@@ -246,7 +246,7 @@ export default function ProgramOutcomesPage() {
     
     setAttainmentLoading(true);
     try {
-      const response = await fetch(`/api/programs/${selectedProgramId}/po-attainment?t=${Date.now()}`);
+      const response = await fetch(`/api/programs/${selectedProgramId}/po-attainment?programId=${selectedProgramId}&t=${Date.now()}`);
       if (response.ok) {
         const data = await response.json();
         setPOAttainmentData(data.data);
@@ -1031,38 +1031,42 @@ export default function ProgramOutcomesPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-red-600">
-                    {poAttainmentData.notAttainedPOs}
+                    {(viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.notAttainedPOs || 0}
                   </div>
                   <div className="text-sm text-gray-600">Not Attained</div>
                   <div className="text-xs text-gray-500">
-                    {poAttainmentData.totalPOs > 0 ? ((poAttainmentData.notAttainedPOs / poAttainmentData.totalPOs) * 100).toFixed(0) : 0}%
+                    {((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 0) > 0 ? 
+                      (((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.notAttainedPOs || 0) / ((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 1) * 100).toFixed(0) : '0'}%
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-yellow-600">
-                    {poAttainmentData.level1POs}
+                    {(viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level1POs || 0}
                   </div>
                   <div className="text-sm text-gray-600">Level 1</div>
                   <div className="text-xs text-gray-500">
-                    {poAttainmentData.totalPOs > 0 ? ((poAttainmentData.level1POs / poAttainmentData.totalPOs) * 100).toFixed(0) : 0}%
+                    {((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 0) > 0 ? 
+                      (((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level1POs || 0) / ((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 1) * 100).toFixed(0) : '0'}%
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-orange-600">
-                    {poAttainmentData.level2POs}
+                    {(viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level2POs || 0}
                   </div>
                   <div className="text-sm text-gray-600">Level 2</div>
                   <div className="text-xs text-gray-500">
-                    {poAttainmentData.totalPOs > 0 ? ((poAttainmentData.level2POs / poAttainmentData.totalPOs) * 100).toFixed(0) : 0}%
+                    {((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 0) > 0 ? 
+                      (((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level2POs || 0) / ((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 1) * 100).toFixed(0) : '0'}%
                   </div>
                 </div>
                 <div className="text-center p-4 border rounded-lg">
                   <div className="text-2xl font-bold text-green-600">
-                    {poAttainmentData.level3POs}
+                    {(viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level3POs || 0}
                   </div>
                   <div className="text-sm text-gray-600">Level 3</div>
                   <div className="text-xs text-gray-500">
-                    {poAttainmentData.totalPOs > 0 ? ((poAttainmentData.level3POs / poAttainmentData.totalPOs) * 100).toFixed(0) : 0}%
+                    {((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 0) > 0 ? 
+                      (((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.level3POs || 0) / ((viewMode === 'batch' ? batchPOAttainmentData : poAttainmentData)?.totalPOs || 1) * 100).toFixed(0) : '0'}%
                   </div>
                 </div>
               </div>

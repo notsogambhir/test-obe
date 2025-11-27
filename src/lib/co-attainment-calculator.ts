@@ -114,9 +114,12 @@ export class COAttainmentCalculator {
 
       // Process each attempted question
       for (const mark of studentMarks) {
-        totalObtainedMarks += mark.obtainedMarks;
-        totalMaxMarks += mark.maxMarks;
-        attemptedQuestions++;
+        // Only include marks that are not null (null means unattempted)
+        if (mark.obtainedMarks !== null) {
+          totalObtainedMarks += mark.obtainedMarks;
+          totalMaxMarks += mark.maxMarks;
+          attemptedQuestions++;
+        }
       }
 
       // Step 4: Calculate percentage based on attempted questions only
@@ -472,8 +475,9 @@ export class COAttainmentCalculator {
         data.map(item =>
           db.cOAttainment.upsert({
             where: {
-              courseId_coId_studentId_academicYear: {
+              courseId_sectionId_coId_studentId_academicYear: {
                 courseId: item.courseId,
+                sectionId: '', // Course-level attainment, not section-specific
                 coId: item.coId,
                 studentId: item.studentId,
                 academicYear: item.academicYear

@@ -42,7 +42,7 @@ export function hasPermission(user: AuthUser | null, permission: Permission): bo
       return ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR'].includes(role);
     
     case Permission.MANAGE_COURSE:
-      return ['ADMIN', 'UNIVERSITY', 'DEPARTMENT'].includes(role);
+      return ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR'].includes(role);
     
     case Permission.VIEW_COURSES:
       return ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR', 'TEACHER'].includes(role);

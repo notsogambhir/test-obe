@@ -151,6 +151,14 @@ export function Sidebar({ user, activeView, onViewChange, onLogout, onBackToSele
       icon: Target,
       requiredRole: 'PROGRAM_COORDINATOR',
     },
+    // Reports - available to all roles
+    {
+      id: 'reports',
+      label: 'Reports',
+      href: '/reports',
+      icon: FileText,
+      requiredRole: 'TEACHER',
+    },
     // User Management - Admin only
     {
       id: 'users',

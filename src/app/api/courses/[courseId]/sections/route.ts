@@ -20,55 +20,72 @@ export async function GET(
       return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
     }
 
-    // Get course to verify permissions and get batch info
+    // Get course information to find the batch
     const course = await db.course.findUnique({
       where: { id: courseId },
-      include: {
-        batch: {
-          include: {
-            program: true
-          }
-        }
-      }
+      select: { batchId: true }
     });
 
     if (!course) {
       return NextResponse.json({ error: 'Course not found' }, { status: 404 });
     }
 
-    // Check permissions based on user role
-    const canViewSections = 
-      user.role === 'ADMIN' || 
-      user.role === 'UNIVERSITY' || 
-      (user.role === 'DEPARTMENT' && course.batch.program.collegeId === user.collegeId) ||
-      (user.role === 'PROGRAM_COORDINATOR' && course.batch.programId === user.programId) ||
-      (user.role === 'TEACHER'); // Teachers can view sections to select for assessment creation
-
-    if (!canViewSections) {
-      return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
-    }
-
     // Get sections for this course's batch
     const sections = await db.section.findMany({
       where: {
-        batchId: course.batchId,
-        isActive: true
-      },
-      include: {
-        _count: {
-          select: {
-            students: true
-          }
-        }
+        batchId: course.batchId
       },
       orderBy: {
         name: 'asc'
       }
     });
 
-    return NextResponse.json(sections);
+    console.log(`Found ${sections.length} sections for batch ${course.batchId}`);
+
+    // Get student counts for each section
+    const sectionsWithCounts = await Promise.all(
+      sections.map(async (section) => {
+        try {
+          // Count unique students enrolled in this course who have marks in this section
+          const studentMarks = await db.studentMark.findMany({
+            where: {
+              sectionId: section.id,
+              student: {
+                enrollments: {
+                  some: {
+                    courseId: courseId,
+                    isActive: true
+                  }
+                }
+              }
+            },
+            select: {
+              studentId: true
+            }
+          });
+
+          const uniqueStudentCount = new Set(studentMarks.map(mark => mark.studentId)).size;
+          console.log(`Section ${section.name}: ${uniqueStudentCount} students with marks`);
+
+          return {
+            id: section.id,
+            name: section.name,
+            studentCount: uniqueStudentCount
+          };
+        } catch (error) {
+          console.error(`Error counting students for section ${section.name}:`, error);
+          return {
+            id: section.id,
+            name: section.name,
+            studentCount: 0
+          };
+        }
+      })
+    );
+
+    return NextResponse.json(sectionsWithCounts);
   } catch (error) {
-    console.error('Error fetching course sections:', error);
+    console.error('Error fetching sections:', error);
     return NextResponse.json({ error: 'Failed to fetch sections' }, { status: 500 });
   }
 }

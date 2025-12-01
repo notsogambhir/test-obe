@@ -137,7 +137,7 @@ export async function DELETE(
           select: {
             batches: true,
             users: true,
-            students: true
+            pos: true
           }
         }
       }
@@ -154,10 +154,10 @@ export async function DELETE(
     if (
       existingProgram._count.batches > 0 ||
       existingProgram._count.users > 0 ||
-      existingProgram._count.students > 0
+      existingProgram._count.pos > 0
     ) {
       return NextResponse.json(
-        { error: 'Cannot delete program with associated batches, users, or students' },
+        { error: 'Cannot delete program with associated batches, users, or program outcomes' },
         { status: 400 }
       );
     }

@@ -3,6 +3,55 @@ import { db } from '@/lib/db';
 import { getUserFromRequest } from '@/lib/server-auth';
 import { canCreateCourse } from '@/lib/permissions';
 
+// GET handler - fetch courses by batch
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const batchId = searchParams.get('batchId');
+
+    if (!batchId) {
+      return NextResponse.json(
+        { error: 'Batch ID is required' },
+        { status: 400 }
+      );
+    }
+
+    const courses = await db.course.findMany({
+      where: { batchId },
+      include: {
+        batch: {
+          include: {
+            program: {
+              include: {
+                college: true
+              }
+            }
+          }
+        },
+        _count: {
+          select: {
+            courseOutcomes: true,
+            assessments: true,
+            enrollments: true,
+            coPOMappings: true
+          }
+        }
+      },
+      orderBy: {
+        code: 'asc'
+      }
+    });
+
+    return NextResponse.json(courses);
+  } catch (error) {
+    console.error('Error fetching courses by batch:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch courses' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getUserFromRequest(request);

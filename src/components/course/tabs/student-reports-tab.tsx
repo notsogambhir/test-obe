@@ -28,11 +28,23 @@ interface StudentCOAttainment {
   coId: string;
   coCode: string;
   percentage: number;
+  weightedPercentage: number; // Added weighted percentage
   metTarget: boolean;
   totalObtainedMarks: number;
   totalMaxMarks: number;
   attemptedQuestions: number;
   totalQuestions: number;
+  assessmentWeightages?: { // Added assessment weightage breakdown
+    assessmentId: string;
+    assessmentName: string;
+    assessmentType: string;
+    weightage: number;
+    obtainedMarks: number;
+    maxMarks: number;
+    percentage: number;
+    contribution: number; // How much this assessment contributes to final weighted score
+    totalWeightageForCO: number; // Total weightage for this CO
+  }[];
 }
 
 interface CourseCOAttainment {
@@ -59,7 +71,7 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
   const [selectedSection, setSelectedSection] = useState<string>('all');
   const [loading, setLoading] = useState(false);
   const [lastCalculated, setLastCalculated] = useState<string>('');
-  const [sections, setSections] = useState<any[]>([]);
+  const [sections, setSections] = useState<{id: string, name: string, studentCount: number}[]>([]);
 
   useEffect(() => {
     console.log(`🔄 Student Reports tab: Course changed to: ${courseId}`);
@@ -67,6 +79,14 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
     fetchAttainments();
     fetchSections();
   }, [courseId]);
+
+  // Refetch attainments when section changes
+  useEffect(() => {
+    if (courseId && selectedSection) {
+      console.log(`🔄 Section changed to: ${selectedSection}, refetching attainments`);
+      fetchAttainments();
+    }
+  }, [selectedSection, courseId]);
 
   const fetchCOs = async () => {
     try {
@@ -93,7 +113,13 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
   const fetchAttainments = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`/api/courses/${courseId}/compliant-co-attainment`);
+      
+      // Build API URL with section parameter
+      const apiUrl = selectedSection && selectedSection !== 'all' 
+        ? `/api/courses/${courseId}/compliant-co-attainment?sectionId=${selectedSection}`
+        : `/api/courses/${courseId}/compliant-co-attainment`;
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -132,13 +158,14 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
 
   const fetchSections = async () => {
     try {
-      const response = await fetch(`/api/courses/${courseId}/roster`);
+      console.log(`📋 Fetching sections for course: ${courseId}`);
+      const response = await fetch(`/api/courses/${courseId}/sections`);
       if (response.ok) {
         const data: any[] = await response.json();
-        // Extract sections from student data
-        const uniqueSections: string[] = [...new Set(data.map((student: any) => student.sectionName).filter(Boolean))];
-        const sectionsData = uniqueSections.map((name: string) => ({ id: name, name }));
-        setSections(sectionsData);
+        console.log('📋 Sections data received:', data);
+        setSections(data);
+      } else {
+        console.error('Failed to fetch sections data');
       }
     } catch (error) {
       console.error('Failed to fetch sections:', error);
@@ -187,7 +214,7 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
     if (!selectedCOData) return;
 
     const headers = [
-      'Student ID', 'Student Name', 'Section', 'CO Code', 'Percentage', 
+      'Student ID', 'Student Name', 'Section', 'CO Code', 'Simple Percentage', 'Weighted Percentage', 
       'Met Target', 'Obtained Marks', 'Max Marks', 'Attempted Questions', 'Total Questions'
     ];
     
@@ -197,6 +224,7 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
       student.sectionName || '',
       student.coCode,
       student.percentage.toFixed(2),
+      student.weightedPercentage.toFixed(2),
       student.metTarget ? 'Yes' : 'No',
       student.totalObtainedMarks,
       student.totalMaxMarks,
@@ -277,8 +305,8 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
                 <SelectContent>
                   <SelectItem value="all">All Sections</SelectItem>
                   {sections.map((section) => (
-                    <SelectItem key={section.id} value={section.name}>
-                      {section.name}
+                    <SelectItem key={section.id} value={section.id}>
+                      {section.name} ({section.studentCount} students)
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -382,7 +410,8 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
                           <TableHead>Student ID</TableHead>
                           <TableHead>Student Name</TableHead>
                           <TableHead>Section</TableHead>
-                          <TableHead>CO Score</TableHead>
+                          <TableHead>Marks</TableHead>
+                          <TableHead>Weighted CO Score</TableHead>
                           <TableHead>Target Met</TableHead>
                           <TableHead>Questions Attempted</TableHead>
                           <TableHead>Performance</TableHead>
@@ -395,14 +424,25 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
                             <TableCell>{student.studentName}</TableCell>
                             <TableCell>{student.sectionName || '-'}</TableCell>
                             <TableCell>
+                              <div className="text-sm">
+                                <span className="font-medium">{student.totalObtainedMarks || 0}</span>
+                                <span className="text-gray-500">/{student.totalMaxMarks || 0}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <div className="flex items-center gap-2">
-                                <span className="font-semibold">{student.percentage.toFixed(1)}%</span>
+                                <span className="font-semibold">{student.weightedPercentage.toFixed(1)}%</span>
                                 {student.metTarget ? (
                                   <TrendingUp className="h-4 w-4 text-green-600" />
                                 ) : (
                                   <TrendingDown className="h-4 w-4 text-red-600" />
                                 )}
                               </div>
+                              {student.assessmentWeightages && student.assessmentWeightages.length > 0 && (
+                                <div className="text-xs text-gray-500 mt-1">
+                                  Weighted avg of {student.assessmentWeightages.length} assessments
+                                </div>
+                              )}
                             </TableCell>
                             <TableCell>
                               <Badge variant={student.metTarget ? "default" : "destructive"}>

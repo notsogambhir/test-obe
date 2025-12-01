@@ -18,8 +18,8 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
     minimumCacheTTL: 60 * 24 * 60 * 60, // 60 days
   },
-  // Turbopack configuration (empty to avoid webpack/turbopack conflict)
-  turbopack: {},
+  // Turbopack configuration (disabled for build to avoid conflicts)
+  // turbopack: {},
   // Suppress WebSocket errors in preview environments
   webpack: (config, { dev, isServer }) => {
       if (!dev || process.env.NODE_ENV === 'production') {

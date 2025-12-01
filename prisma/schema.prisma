@@ -14,7 +14,7 @@ model User {
   employeeId         String?             @unique
   password           String
   name               String
-  role               UserRole            @default("TEACHER")
+  role               UserRole            @default(TEACHER)
   collegeId          String?
   programId          String?
   batchId            String?
@@ -109,7 +109,7 @@ model Course {
   name               String
   batchId            String
   description        String?
-  status             CourseStatus        @default("FUTURE")
+  status             CourseStatus        @default(FUTURE)
   targetPercentage   Float               @default(50.0)
   level1Threshold    Float               @default(50.0)
   level2Threshold    Float               @default(70.0)
@@ -262,7 +262,7 @@ model Enrollment {
   student   User     @relation(fields: [studentId], references: [id])
   course    Course   @relation(fields: [courseId], references: [id])
 
-  @@unique([courseId, studentId])
+  @@unique([courseId, studentId, sectionId])
   @@map("enrollments")
 }
 
@@ -300,6 +300,20 @@ model StudentMark {
 
   @@unique([questionId, sectionId, studentId, academicYear])
   @@map("student_marks")
+}
+
+// Add foreign key constraints for data integrity
+model Question {
+  // ... existing fields ...
+  assessment   Assessment @relation(fields: [assessmentId], references: [id])
+  // ... existing fields ...
+}
+
+model Assessment {
+  // ... existing fields ...
+  courseId     String
+  sectionId    String?
+  // ... existing fields ...
 }
 
 enum UserRole {

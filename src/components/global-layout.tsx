@@ -132,32 +132,30 @@ const GlobalLayout = memo(function GlobalLayout({ user, children }: GlobalLayout
         onBackToSelection={handleBackToSelection}
       />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="bg-white shadow-sm border-b border-gray-200">
-          <div className="px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {getDisplayString() || 'Dashboard'}
-                </h1>
-                <p className="text-sm text-gray-600">
-                  Welcome back, {user.name}
-                </p>
+        <header className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-xl font-semibold text-gray-900">
+                    {getDisplayString() || 'Dashboard'}
+                  </h1>
+                  <p className="text-sm text-gray-600">
+                    Welcome back, {user.name}
+                  </p>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <span className="text-sm text-gray-600">
+                    {user.role.replace('_', ' ').toLowerCase()}
+                  </span>
+                  <button
+                    onClick={handleLogout}
+                    className="text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    Logout
+                  </button>
+                </div>
               </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  {user.role.replace('_', ' ').toLowerCase()}
-                </span>
-                <button
-                  onClick={handleLogout}
-                  className="text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Logout
-                </button>
-              </div>
-            </div>
-          </div>
         </header>
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto p-6">
           {children}
         </main>
       </div>

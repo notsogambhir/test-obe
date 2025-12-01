@@ -128,7 +128,7 @@ function CourseCategory({ title, courses, status, defaultExpanded = false, onUpd
               {courses.map((course) => (
                 <div 
                   key={course.id} 
-                  className={`flex items-center justify-between p-3 border rounded-lg transition-all duration-300 ${
+                  className={`flex flex-col sm:flex-row items-start sm:items-center justify-between p-3 sm:p-4 border rounded-lg transition-all duration-300 gap-3 sm:gap-0 ${
                     isUpdating(course.id) 
                       ? 'bg-yellow-50 border-yellow-200' 
                       : 'hover:bg-gray-50'
@@ -153,7 +153,7 @@ function CourseCategory({ title, courses, status, defaultExpanded = false, onUpd
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2 sm:mt-0">
                     <Badge variant="outline" className="text-xs">{course._count?.enrollments || 0} Students</Badge>
                     <Badge variant="secondary" className="bg-red-50 text-red-700 border-red-200 text-xs">{course._count?.courseOutcomes || 0} COs</Badge>
                     <Badge className="bg-red-100 text-red-800 border-red-200 text-xs">{course._count?.assessments || 0} Assessments</Badge>
@@ -450,8 +450,8 @@ export function CourseManagementAdmin({ user }: { user: User }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-6 px-2 lg:px-0">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Course Management - {user.role.replace('_', ' ')}</h1>
         </div>

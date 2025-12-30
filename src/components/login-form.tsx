@@ -50,10 +50,16 @@ export function LoginForm() {
 
   const fetchColleges = async () => {
     try {
+      console.log('Fetching colleges...');
       const response = await fetch('/api/colleges');
+      console.log('Colleges response status:', response.status);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Colleges data:', data);
         setColleges(data);
+      } else {
+        console.error('Failed to fetch colleges:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Failed to fetch colleges:', error);
@@ -159,8 +165,12 @@ export function LoginForm() {
         if (colleges.length === 0) {
           console.log('Colleges not loaded yet, fetching...');
           await fetchColleges();
-          // Wait a bit more for state to update
-          await new Promise(resolve => setTimeout(resolve, 100));
+          // Wait a bit more for state to update and check again
+          let attempts = 0;
+          while (colleges.length === 0 && attempts < 5) {
+            await new Promise(resolve => setTimeout(resolve, 200));
+            attempts++;
+          }
         }
 
         const college = colleges.find(c => c.code === collegeCode);
@@ -169,7 +179,7 @@ export function LoginForm() {
           setFormData(prev => ({ ...prev, collegeId: college.id }));
           console.log(`Found college ${collegeCode} with ID: ${college.id}`);
         } else {
-          console.error(`College with code ${collegeCode} not found. Available colleges:`, colleges.map(c => c.code));
+          console.error(`College with code ${collegeCode} not found. Available colleges:`, colleges.map(c => ({ code: c.code, name: c.name })));
           throw new Error(`College with code ${collegeCode} not found`);
         }
       } else {

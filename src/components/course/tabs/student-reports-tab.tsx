@@ -19,6 +19,7 @@ import {
   Plus
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { getAuthHeaders } from '@/lib/api-config';
 
 interface StudentCOAttainment {
   studentId: string;
@@ -62,9 +63,10 @@ interface CourseCOAttainment {
 interface StudentReportsTabProps {
   courseId: string;
   courseData?: any;
+  user?: any;
 }
 
-export function StudentReportsTab({ courseId, courseData }: StudentReportsTabProps) {
+export function StudentReportsTab({ courseId, courseData, user }: StudentReportsTabProps) {
   const [attainments, setAttainments] = useState<CourseCOAttainment[]>([]);
   const [cos, setCOs] = useState<any[]>([]);
   const [selectedCO, setSelectedCO] = useState<string>('');
@@ -90,7 +92,9 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
 
   const fetchCOs = async () => {
     try {
-      const response = await fetch(`/api/courses/${courseId}/cos`);
+      const response = await fetch(`/api/courses/${courseId}/cos`, { 
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const data = await response.json();
         setCOs(data);
@@ -119,7 +123,9 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
         ? `/api/courses/${courseId}/compliant-co-attainment?sectionId=${selectedSection}`
         : `/api/courses/${courseId}/compliant-co-attainment`;
       
-      const response = await fetch(apiUrl);
+      const response = await fetch(apiUrl, { 
+        headers: getAuthHeaders()
+      });
       
       if (!response.ok) {
         const errorText = await response.text();
@@ -159,7 +165,10 @@ export function StudentReportsTab({ courseId, courseData }: StudentReportsTabPro
   const fetchSections = async () => {
     try {
       console.log(`📋 Fetching sections for course: ${courseId}`);
-      const response = await fetch(`/api/courses/${courseId}/sections`);
+      
+      const response = await fetch(`/api/courses/${courseId}/sections`, { 
+        headers: getAuthHeaders()
+      });
       if (response.ok) {
         const data: any[] = await response.json();
         console.log('📋 Sections data received:', data);

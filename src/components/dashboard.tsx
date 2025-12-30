@@ -7,6 +7,8 @@ import { UserManagement } from '@/components/user-management';
 import { AcademicStructure } from '@/components/academic-structure';
 import { CourseManagement } from '@/components/course-management';
 import { useSidebarContext } from '@/contexts/sidebar-context';
+import { SimpleDashboard } from '@/components/simple-dashboard';
+import { Badge } from '@/components/ui/badge';
 
 interface User {
   id: string;
@@ -25,6 +27,7 @@ export function Dashboard() {
   const { user } = useAuth();
   const { getContextString } = useSidebarContext();
   const [activeView, setActiveView] = React.useState<ActiveView>('dashboard');
+  const [useSimpleDashboard, setUseSimpleDashboard] = React.useState(false);
 
   const getNavigationItems = () => {
     const items = [
@@ -56,7 +59,7 @@ export function Dashboard() {
       case 'courses':
         return <CourseManagement user={user!} />;
       default:
-        return <DashboardOverview />;
+        return useSimpleDashboard ? <SimpleDashboard /> : <DashboardOverview />;
     }
   };
 
@@ -72,7 +75,40 @@ export function Dashboard() {
 
   return (
     <div className="p-6">
-      <DashboardOverview />
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <div className="flex gap-2">
+          <Badge variant={useSimpleDashboard ? "secondary" : "default"}>
+            {useSimpleDashboard ? "Simple Mode" : "Full Mode"}
+          </Badge>
+          <button
+            onClick={() => setUseSimpleDashboard(!useSimpleDashboard)}
+            className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600"
+          >
+            Toggle Mode
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-between items-center">
+        {getNavigationItems().map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActiveView(item.id as ActiveView)}
+            className={`px-4 py-2 text-sm rounded-lg transition-colors ${
+              activeView === item.id
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-6">
+        {renderActiveView()}
+      </div>
     </div>
   );
 }

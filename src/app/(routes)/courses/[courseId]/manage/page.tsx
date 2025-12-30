@@ -296,7 +296,7 @@ export default function ManageCoursePage() {
         </TabsContent>
 
         <TabsContent value="student-reports">
-          <StudentReportsTab courseId={courseId} courseData={course} />
+          <StudentReportsTab courseId={courseId} courseData={course} user={user} />
         </TabsContent>
         
         {user && ['ADMIN', 'UNIVERSITY', 'PROGRAM_COORDINATOR'].includes(user.role) && (

@@ -18,13 +18,17 @@ export function getAuthHeaders(): Record<string, string> {
     'Content-Type': 'application/json',
   };
 
-  // For local access, rely on cookies (more secure)
+  // For local development, rely on cookies (more secure)
   // For Z.ai preview, use localStorage tokens
   if (typeof window !== 'undefined') {
     const isZaiPreview = window.location.hostname.includes('space.z.ai');
     const token = localStorage.getItem('obe-auth-token');
     
     if (isZaiPreview && token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    // For local development, also try token if available (fallback mechanism)
+    else if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
   }

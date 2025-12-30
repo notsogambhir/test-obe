@@ -112,12 +112,10 @@ export async function POST(
         for (const student of eligibleStudents) {
           try {
             // Check if student is already enrolled
-            const existingEnrollment = await db.enrollment.findUnique({
+            const existingEnrollment = await db.enrollment.findFirst({
               where: {
-                courseId_studentId: {
-                  courseId: courseId,
-                  studentId: student.id
-                }
+                courseId: courseId,
+                studentId: student.id
               }
             });
 

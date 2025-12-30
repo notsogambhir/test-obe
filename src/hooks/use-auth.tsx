@@ -102,8 +102,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (response.status !== 401) {
           console.log('Server auth check failed:', response.status, response.statusText);
         }
-        setUser(null);
-        localStorage.removeItem('obe-user');
+        // Only clear user if we don't have stored data
+        const storedUser = localStorage.getItem('obe-user');
+        if (!storedUser) {
+          setUser(null);
+        }
       }
     } catch (error) {
       console.error('Server auth check request failed:', error);

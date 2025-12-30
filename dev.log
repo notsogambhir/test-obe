@@ -2,8 +2,59 @@
 [33m[nodemon] to restart at any time, enter `rs`[39m
 [33m[nodemon] watching path(s): server.ts src/**/*[39m
 [33m[nodemon] watching extensions: ts,tsx,js,jsx[39m
-[32m[nodemon] starting `npx tsx server.ts`[39m
-[baseline-browser-mapping] The data in this module is over two months old.  To ensure accurate Baseline data, please update: `npm i baseline-browser-mapping@latest -D`
- ⨯ Unable to acquire lock at /home/z/my-project/.next/dev/lock, is another instance of next dev running?
-   Suggestion: If you intended to restart next dev, terminate the other process, and then try again.
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `bun x tsx server.ts`[39m
+error: Cannot find module './cjs/index.cjs' from ''
+
+Bun v1.3.4 (Linux x64 baseline)
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m

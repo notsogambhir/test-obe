@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "sqlite"
+  url       = env("DATABASE_URL")
 }
 
 model User {
@@ -256,6 +256,7 @@ model Enrollment {
   id        String   @id @default(cuid())
   courseId  String
   studentId String
+  sectionId String?
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -302,19 +303,7 @@ model StudentMark {
   @@map("student_marks")
 }
 
-// Add foreign key constraints for data integrity
-model Question {
-  // ... existing fields ...
-  assessment   Assessment @relation(fields: [assessmentId], references: [id])
-  // ... existing fields ...
-}
 
-model Assessment {
-  // ... existing fields ...
-  courseId     String
-  sectionId    String?
-  // ... existing fields ...
-}
 
 enum UserRole {
   ADMIN

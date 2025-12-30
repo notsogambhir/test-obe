@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "nodemon --exec \"npx tsx server.ts\" --watch server.ts --watch src --ext ts,tsx,js,jsx 2>&1 | tee dev.log",
-    "build": "next build",
+    "dev": "next dev",
+    "build": "npx prisma db push --accept-data-loss && next build",
     "start": "NODE_ENV=production tsx server.ts 2>&1 | tee server.log",
     "lint": "eslint src --ext .ts,.tsx --max-warnings 0",
     "db:push": "prisma db push",
@@ -14,7 +14,8 @@
     "db:studio": "prisma studio",
     "db:query": "npx tsx scripts/query-db.ts",
     "build:optimized": "NODE_OPTIONS=\"--max-old-space-size=4096\" next build",
-    "db:fix-users": "npx tsx scripts/fix-quick-login-users.ts"
+    "db:fix-users": "npx tsx scripts/fix-quick-login-users.ts",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -68,14 +69,14 @@
     "input-otp": "^1.4.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.525.0",
-    "next": "^16.0.1",
+    "next": "^16.0.8",
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.4",
     "next-themes": "^0.4.6",
     "node-fetch": "^3.3.2",
-    "react": "^19.0.0",
+    "react": "^19.2.1",
     "react-day-picker": "^9.8.0",
-    "react-dom": "^19.0.0",
+    "react-dom": "^19.2.1",
     "react-hook-form": "^7.60.0",
     "react-markdown": "^10.1.0",
     "react-resizable-panels": "^3.0.3",

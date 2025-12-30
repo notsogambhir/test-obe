@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { seed } from '@/lib/seed';
 
-export async function POST() {
+export async function GET() {
   try {
     console.log('🌱 Starting comprehensive database seeding...');
-    
+
     // Use the comprehensive seed function from lib/seed.ts
     await seed();
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       message: 'Database seeded successfully!',
       credentials: {
         admin: 'admin@obeportal.com / admin123',

@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 // Dynamically import Select components to avoid SSR issues
@@ -53,7 +55,7 @@ export function LoginForm() {
       console.log('Fetching colleges...');
       const response = await fetch('/api/colleges');
       console.log('Colleges response status:', response.status);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('Colleges data:', data);
@@ -243,6 +245,14 @@ export function LoginForm() {
             OBE Portal
           </h2>
         </div>
+
+        <Alert className="bg-amber-50 border-amber-200">
+          <Info className="h-4 w-4 text-amber-600" />
+          <AlertTitle className="text-amber-800 font-semibold">Demo Application</AlertTitle>
+          <AlertDescription className="text-amber-700">
+            This app is comprised only of mock data and is a demo for testing purposes.
+          </AlertDescription>
+        </Alert>
 
         <Card>
           <CardHeader>

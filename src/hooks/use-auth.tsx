@@ -3,7 +3,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { User, AuthUser } from '@/types/user';
 import { createApiUrl, getAuthHeaders, saveAuthToken, clearAuthToken } from '@/lib/api-config';
-import { hasRole } from '@/lib/auth';
+import { hasRole } from '@/lib/roles';
 
 // Email validation regex
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

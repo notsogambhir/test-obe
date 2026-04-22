@@ -1,7 +1,9 @@
 import { NextRequest } from 'next/server';
 import { verifyToken } from './auth';
+import { logger } from './logger';
+import { AuthUser } from '@/types/user';
 
-export async function getUserFromRequest(request: NextRequest) {
+export async function getUserFromRequest(request: NextRequest): Promise<AuthUser | null> {
   // First try to get token from Authorization header (Bearer token)
   const authHeader = request.headers.get('authorization');
   
@@ -11,7 +13,7 @@ export async function getUserFromRequest(request: NextRequest) {
       const decoded = verifyToken(token);
       return decoded;
     } catch (error) {
-      console.error('Failed to verify Bearer token:', error);
+      logger.error('Failed to verify Bearer token:', { error: error instanceof Error ? error : new Error(String(error)) });
     }
   }
 
@@ -19,28 +21,30 @@ export async function getUserFromRequest(request: NextRequest) {
   const token = request.cookies.get('auth-token')?.value;
   
   if (!token) {
-    console.log('No authentication token found in header or cookies');
+    logger.info('No authentication token found in header or cookies');
     return null;
   }
 
   try {
     const user = verifyToken(token);
     if (!user) {
-      console.log('No user found in token');
+      logger.info('No user found in token');
       return null;
     }
-    console.log('User authenticated via cookie:', {
-      id: user.id,
-      email: user.email,
-      role: user.role
+    logger.info('User authenticated via cookie:', {
+      metadata: {
+        id: user.id,
+        email: user.email,
+        role: user.role
+      }
     });
     return user;
   } catch (error) {
-    console.error('Failed to verify cookie token:', error);
+    logger.error('Failed to verify cookie token:', { error: error instanceof Error ? error : new Error(String(error)) });
     return null;
   }
 }
 
-export function canCreateCourse(user: any) {
-  return user && ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR'].includes(user.role);
+export function canCreateCourse(user: AuthUser | null | undefined): boolean {
+  return !!user && ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR'].includes(user.role || '');
 }

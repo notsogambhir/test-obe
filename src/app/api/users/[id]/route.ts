@@ -73,7 +73,7 @@ export async function PUT(
 
     // Validate role if provided
     if (role) {
-      const validRoles = ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR', 'TEACHER', 'STUDENT'];
+      const validRoles = ['ADMIN', 'UNIVERSITY', 'DEPARTMENT', 'PROGRAM_COORDINATOR', 'TEACHER'];
       if (!validRoles.includes(role)) {
         return NextResponse.json(
           { error: 'Invalid role' },
@@ -163,6 +163,20 @@ export async function DELETE(
         { error: 'Cannot delete your own account' },
         { status: 400 }
       );
+    }
+
+    // Check for dependent records before hard-deletion
+    const dependencyCount = {
+      teacherAssignments: await db.teacherAssignment.count({ where: { teacherId: params.id } }),
+    };
+
+    const totalDependencies = Object.values(dependencyCount).reduce((a, b) => a + b, 0);
+
+    if (totalDependencies > 0) {
+      return NextResponse.json({
+        error: `Cannot delete user: they have ${totalDependencies} linked academic record(s). Deactivate them instead to preserve data integrity.`,
+        dependencies: dependencyCount,
+      }, { status: 409 });
     }
 
     // Delete user

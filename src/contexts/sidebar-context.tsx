@@ -72,13 +72,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     return null;
   });
   
-  const [selectedBatch, setSelectedBatchState] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('obe-selected-batch');
-      return saved ? JSON.parse(saved) : null;
-    }
-    return null;
-  });
+  const [selectedBatch, setSelectedBatchState] = useState<string | null>(null);
   
   const [colleges, setColleges] = useState<College[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -120,19 +114,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('obe-selected-batch');
       }
     }
-    // Also update user's batchId if it's different
-    if (user && batchId !== user.batchId) {
-      updateUserSelections({ batchId: batchId || undefined });
-    }
   };
 
-  // Sync with user's batchId when it changes, but only if no localStorage value exists
-  useEffect(() => {
-    const savedBatch = typeof window !== 'undefined' ? localStorage.getItem('obe-selected-batch') : null;
-    if (user?.batchId && user.batchId !== selectedBatch && !savedBatch) {
-      setSelectedBatch(user.batchId);
-    }
-  }, [user?.batchId, selectedBatch]);
+
 
   // Sync with user's programId when it changes, but only if no localStorage value exists
   useEffect(() => {
@@ -284,7 +268,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       if (response.ok) {
         const data = await response.json();
         setBatches(data);
-        // Auto-select newest batch
+        // Always auto-select newest batch on fetch
         if (data.length > 0) {
           setSelectedBatch(data[0].id);
         }
@@ -311,10 +295,6 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
 
   const handleSetSelectedBatch = (batchId: string | null) => {
     setSelectedBatch(batchId);
-    // Also update user's batchId if it's different
-    if (user && batchId !== user.batchId) {
-      updateUserSelections({ batchId: batchId || undefined });
-    }
   };
 
   const getContextString = () => {

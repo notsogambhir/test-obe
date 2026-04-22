@@ -17,15 +17,10 @@ interface College {
   code: string;
   description?: string;
   isActive: boolean;
-  departments?: Array<{
-    id: string;
-    name: string;
-    code: string;
-  }>;
   _count: {
-    departments: number;
     programs: number;
     users: number;
+    students: number;
   };
 }
 
@@ -297,20 +292,14 @@ export function CollegeManagement() {
                 </p>
               )}
               
-              {college.departments && college.departments.length > 0 && (
-                <div className="bg-blue-50 p-2 rounded mb-4">
-                  <p className="text-xs text-blue-700 font-medium mb-1">Auto-created Department:</p>
-                  <p className="text-sm text-blue-800">{college.departments[0].name} ({college.departments[0].code})</p>
-                </div>
-              )}
-              
+
               <div className="grid grid-cols-3 gap-4 mb-4">
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-1 text-blue-600">
-                    <Briefcase className="h-4 w-4" />
-                    <span className="text-lg font-semibold">{college._count.departments}</span>
+                    <Users className="h-4 w-4" />
+                    <span className="text-lg font-semibold">{college._count.students}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Departments</p>
+                  <p className="text-xs text-muted-foreground">Students</p>
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-1 text-green-600">
@@ -321,10 +310,10 @@ export function CollegeManagement() {
                 </div>
                 <div className="text-center">
                   <div className="flex items-center justify-center space-x-1 text-purple-600">
-                    <Users className="h-4 w-4" />
+                    <Briefcase className="h-4 w-4" />
                     <span className="text-lg font-semibold">{college._count.users}</span>
                   </div>
-                  <p className="text-xs text-muted-foreground">Users</p>
+                  <p className="text-xs text-muted-foreground">Faculty</p>
                 </div>
               </div>
 
@@ -343,7 +332,7 @@ export function CollegeManagement() {
                   size="sm"
                   onClick={() => handleDeleteCollege(college)}
                   className="text-red-600 hover:text-red-700"
-                  disabled={college._count.departments > 0 || college._count.programs > 0 || college._count.users > 0}
+                  disabled={college._count.programs > 0 || college._count.users > 0 || college._count.students > 0}
                 >
                   <Trash2 className="h-4 w-4" />
                 </Button>

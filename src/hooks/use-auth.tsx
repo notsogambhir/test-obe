@@ -29,7 +29,6 @@ const authUserToUser = (authUser: AuthUser | null): User | null => {
     role: authUser.role,
     collegeId: authUser.collegeId || undefined,
     programId: authUser.programId || undefined,
-    batchId: authUser.batchId || undefined,
   };
 };
 
@@ -50,18 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           const parsedUser = JSON.parse(storedUser);
           
-          // Check if there's a selected batch from login
-          const selectedBatch = localStorage.getItem('obe-selected-batch');
-          if (selectedBatch && !parsedUser.batchId) {
-            // Update user with selected batch
-            const updatedUser = { ...parsedUser, batchId: selectedBatch };
-            setUser(authUserToUser(updatedUser));
-            localStorage.setItem('obe-user', JSON.stringify(updatedUser));
-            localStorage.removeItem('obe-selected-batch');
-            console.log('Updated user with selected batch:', updatedUser);
-          } else {
-            setUser(authUserToUser(parsedUser));
-          }
+          setUser(authUserToUser(parsedUser));
           console.log('Using stored user data:', parsedUser);
           
           // Set loading to false immediately

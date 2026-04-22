@@ -16,7 +16,6 @@ interface User {
   collegeId?: string;
   departmentId?: string;
   programId?: string;
-  batchId?: string;
 }
 
 interface Course {
@@ -118,7 +117,7 @@ function CourseCategory({ title, courses, status, defaultExpanded = false }: Cou
                     <Badge className={`text-xs ${getStatusBadgeColor(course.status)}`}>
                       {course.status}
                     </Badge>
-                    <Link href={`/courses/${course.id}/manage`}>
+                    <Link href={`/courses/${course.id}`}>
                       <Button variant="outline" size="sm" className="hover:bg-red-50 hover:border-red-300">Manage</Button>
                     </Link>
                   </div>
@@ -142,15 +141,11 @@ export function CourseManagementTeacher({ user }: { user: User }) {
     try {
       setLoading(true);
       
-      // Use selectedBatch from sidebar context if available, otherwise fallback to user.batchId
-      const batchIdToUse = selectedBatch || user.batchId;
-      const url = batchIdToUse ? `/api/courses?batchId=${batchIdToUse}` : '/api/courses';
+      const url = selectedBatch ? `/api/courses?batchId=${selectedBatch}` : '/api/courses';
       
       console.log('=== FETCHING COURSES FOR TEACHER ===');
       console.log('User:', user);
       console.log('Selected Batch from sidebar:', selectedBatch);
-      console.log('User batchId:', user.batchId);
-      console.log('BatchId to use:', batchIdToUse);
       console.log('Fetching from URL:', url);
       
       const response = await fetch(url);
@@ -174,7 +169,7 @@ export function CourseManagementTeacher({ user }: { user: User }) {
 
   useEffect(() => {
     fetchCourses();
-  }, [selectedBatch, user.batchId]);
+  }, [selectedBatch]);
 
   // Group courses by status
   const activeCourses = courses.filter(course => course.status === 'ACTIVE');
@@ -198,7 +193,7 @@ export function CourseManagementTeacher({ user }: { user: User }) {
             <BookOpen className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
             <p className="text-gray-600">
-              {user.batchId ? 'No active or completed courses found for this batch.' : 'Please select a batch to view courses.'}
+              {selectedBatch ? 'No active or completed courses found for this batch.' : 'Please select a batch to view courses.'}
             </p>
           </CardContent>
         </Card>

@@ -20,10 +20,7 @@ export async function GET(request: NextRequest) {
     const collegeId = searchParams.get('collegeId');
 
     // Build where clause based on user role and provided parameters
-    let whereClause: any = { 
-      role: 'STUDENT',
-      isActive: true  // Only show active students
-    };
+    let whereClause: any = {};
     
     if (user.role === 'DEPARTMENT' || user.role === 'PROGRAM_COORDINATOR') {
       // Department users can only see students from their programs
@@ -35,8 +32,6 @@ export async function GET(request: NextRequest) {
       
       if (batchId) {
         whereClause.batchId = batchId;
-      } else if (user.batchId) {
-        whereClause.batchId = user.batchId;
       }
 
       // If collegeId is provided, filter by programs under that college
@@ -76,7 +71,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const students = await db.user.findMany({
+    const students = await db.student.findMany({
       where: whereClause,
       include: {
         college: {
@@ -159,7 +154,6 @@ export async function POST(request: NextRequest) {
       studentId: body.studentId?.trim(),
       name: body.name?.trim(),
       email: body.email?.trim(),
-      password: body.password?.trim(),
       collegeId: body.collegeId?.trim(),
       programId: body.programId?.trim(),
       batchId: body.batchId?.trim(),
@@ -169,7 +163,7 @@ export async function POST(request: NextRequest) {
     console.log('Validated student data:', validatedData);
 
     // Check if student ID already exists
-    const existingStudent = await db.user.findUnique({
+    const existingStudent = await db.student.findUnique({
       where: { studentId: validatedData.studentId },
     });
 
@@ -180,13 +174,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate password length
-    if (!validatedData.password || validatedData.password.length < 3) {
-      return NextResponse.json(
-        { error: 'Password must be at least 3 characters long' },
-        { status: 400 }
-      );
-    }
 
     // Set college, program, and batch based on user context if not provided
     if (!validatedData.collegeId && user.collegeId) {
@@ -195,8 +182,8 @@ export async function POST(request: NextRequest) {
     if (!validatedData.programId && user.programId) {
       validatedData.programId = user.programId;
     }
-    if (!validatedData.batchId && user.batchId) {
-      validatedData.batchId = user.batchId;
+    if (!validatedData.batchId) {
+      // Do nothing - batchId must be provided in the request or handled by context
     }
 
     // Validate that collegeId, programId, and batchId are provided and valid
@@ -258,19 +245,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Create student
-    const studentPassword = validatedData.password || 'defaultPassword123';
-    
-    const student = await db.user.create({
+    const student = await db.student.create({
       data: {
         studentId: validatedData.studentId,
         name: validatedData.name,
         email: validatedData.email,
-        password: studentPassword,
-        role: 'STUDENT',
         collegeId: validatedData.collegeId,
         programId: validatedData.programId,
         batchId: validatedData.batchId,
-        isActive: true,
       },
       include: {
         college: {
@@ -329,16 +311,22 @@ export async function POST(request: NextRequest) {
       if (sections.length > 0) {
         // Assign to first available section
         const firstSection = sections[0];
-        await db.user.update({
+        const updatedStudent = await db.student.update({
           where: { id: student.id },
           data: {
             sectionId: firstSection.id
+          },
+          include: {
+            batch: {
+              include: {
+                program: true
+              }
+            },
+            section: true
           }
         });
         
-        // Update the student object with section info
-        student.sectionId = firstSection.id;
-        student.section = { id: firstSection.id, name: firstSection.name };
+        return NextResponse.json(updatedStudent, { status: 201 });
       }
     }
 

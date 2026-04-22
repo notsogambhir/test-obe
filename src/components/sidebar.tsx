@@ -33,7 +33,6 @@ interface User {
   collegeId?: string;
   departmentId?: string;
   programId?: string;
-  batchId?: string;
 }
 
 interface SidebarProps {
@@ -95,12 +94,7 @@ export function Sidebar({ user, activeView, onViewChange, onLogout, onBackToSele
     }
   }, [user.role, user.programId, selectedProgram, setSelectedProgram]);
 
-  // Initialize batch for users with batchId
-  useEffect(() => {
-    if (user.batchId && !selectedBatch) {
-      setSelectedBatch(user.batchId);
-    }
-  }, [user.batchId, selectedBatch, setSelectedBatch]);
+
 
   const menuItems = [
     // Dashboard - available to all roles
@@ -174,13 +168,6 @@ export function Sidebar({ user, activeView, onViewChange, onLogout, onBackToSele
       href: '/system-settings',
       icon: Settings,
       requiredRole: 'ADMIN',
-    },
-    {
-      id: 'academic',
-      label: 'Academic Structure',
-      href: '/academic',
-      icon: GraduationCap,
-      requiredRole: 'DEPARTMENT',
     },
   ];
 

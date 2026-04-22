@@ -12,6 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Users, Search, Loader2, Eye, Filter, Power, PowerOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { StudentDetailsModal } from './student-details-modal';
+import { useSidebarContext } from '@/contexts/sidebar-context';
 
 interface User {
   id: string;
@@ -21,7 +22,6 @@ interface User {
   collegeId?: string;
   departmentId?: string;
   programId?: string;
-  batchId?: string;
 }
 
 interface Student {
@@ -47,6 +47,7 @@ interface Student {
 }
 
 export function StudentManagementProgramCoordinator({ user }: { user: User }) {
+  const { selectedProgram, selectedBatch } = useSidebarContext();
   const [students, setStudents] = useState<Student[]>([]);
   const [filteredStudents, setFilteredStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,10 +55,6 @@ export function StudentManagementProgramCoordinator({ user }: { user: User }) {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
-  const [programs, setPrograms] = useState<any[]>([]);
-  const [batches, setBatches] = useState<any[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<string>(user.programId || '');
-  const [selectedBatch, setSelectedBatch] = useState<string>(user.batchId || '');
 
   // Fetch students
   const fetchStudents = async () => {
@@ -85,36 +82,9 @@ export function StudentManagementProgramCoordinator({ user }: { user: User }) {
     }
   };
 
-  // Fetch programs and batches
-  const fetchProgramsAndBatches = async () => {
-    try {
-      if (user.collegeId) {
-        const programsResponse = await fetch(`/api/programs?collegeId=${user.collegeId}`);
-        if (programsResponse.ok) {
-          const programsData = await programsResponse.json();
-          setPrograms(programsData);
-        }
-      }
-
-      if (selectedProgram) {
-        const batchesResponse = await fetch(`/api/batches?programId=${selectedProgram}`);
-        if (batchesResponse.ok) {
-          const batchesData = await batchesResponse.json();
-          setBatches(batchesData);
-        }
-      }
-    } catch (error) {
-      console.error('Error fetching programs and batches:', error);
-    }
-  };
-
   useEffect(() => {
     fetchStudents();
   }, [selectedProgram, selectedBatch]);
-
-  useEffect(() => {
-    fetchProgramsAndBatches();
-  }, [selectedProgram, user.collegeId]);
 
   // Filter students based on search term and status
   useEffect(() => {
@@ -175,12 +145,6 @@ export function StudentManagementProgramCoordinator({ user }: { user: User }) {
     }
   };
 
-  // Handle program change
-  const handleProgramChange = (programId: string) => {
-    setSelectedProgram(programId);
-    setSelectedBatch(''); // Reset batch when program changes
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -201,36 +165,9 @@ export function StudentManagementProgramCoordinator({ user }: { user: User }) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div>
-              <Label htmlFor="program">Program</Label>
-              <Select value={selectedProgram} onValueChange={handleProgramChange}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select program" />
-                </SelectTrigger>
-                <SelectContent>
-                  {programs.map((program) => (
-                    <SelectItem key={program.id} value={program.id}>
-                      {program.name} ({program.code})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label htmlFor="batch">Batch</Label>
-              <Select value={selectedBatch} onValueChange={setSelectedBatch}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select batch" />
-                </SelectTrigger>
-                <SelectContent>
-                  {batches.map((batch) => (
-                    <SelectItem key={batch.id} value={batch.id}>
-                      {batch.name} ({batch.startYear}-{batch.endYear})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex items-center gap-4 text-sm text-gray-600">
+              <p>Managing students for globally selected program and batch.</p>
             </div>
             <div>
               <Label htmlFor="status">Status</Label>
@@ -389,4 +326,4 @@ export function StudentManagementProgramCoordinator({ user }: { user: User }) {
       />
     </div>
   );
-}
+}

@@ -495,7 +495,7 @@ export function StudentReportsTab({ courseId, courseData, user }: StudentReports
               <div className="flex justify-center gap-4">
                 <Button 
                   variant="outline" 
-                  onClick={() => window.location.href = `/courses/${courseId}/manage?tab=cos`}
+                  onClick={() => window.location.href = `/courses/${courseId}?tab=cos`}
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Define Course Outcomes

@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const role = searchParams.get('role');
     const programId = searchParams.get('programId');
-    const includeStudents = searchParams.get('includeStudents') === 'true';
+    const collegeId = searchParams.get('collegeId');
 
     // Build where clause based on user role and filters
     let whereClause: any = {};
@@ -36,27 +36,20 @@ export async function GET(request: NextRequest) {
     switch (user.role) {
       case 'ADMIN':
       case 'UNIVERSITY':
-        // Can see all users
+        // Can see all users, but respect the collegeId filter if provided
+        if (collegeId) {
+          whereClause.collegeId = collegeId;
+        }
         break;
         
       case 'DEPARTMENT':
-        // Can only see users from their college (excluding students unless requested)
+        // Can only see users from their college
         whereClause.collegeId = user.collegeId;
-        if (!includeStudents) {
-          whereClause.role = {
-            notIn: ['STUDENT']
-          };
-        }
         break;
         
       case 'PROGRAM_COORDINATOR':
-        // Can only see users from their program (excluding students unless requested)
+        // Can only see users from their program
         whereClause.programId = user.programId;
-        if (!includeStudents) {
-          whereClause.role = {
-            notIn: ['STUDENT']
-          };
-        }
         break;
         
       default:
@@ -73,11 +66,6 @@ export async function GET(request: NextRequest) {
           select: {
             name: true,
             code: true
-          }
-        },
-        batch: {
-          select: {
-            name: true
           }
         },
         college: {
@@ -105,12 +93,13 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify authentication - ADMIN and DEPARTMENT can create users
+    // Verify authentication
     const user = await getUserFromRequest(request);
     
-    if (!user || !['ADMIN', 'DEPARTMENT'].includes(user.role)) {
+    // Only ADMIN can create staff users (Fix #9)
+    if (!user || user.role !== 'ADMIN') {
       return NextResponse.json(
-        { error: 'Admin or Department access required' },
+        { error: 'Admin access required for staff user management' },
         { status: 403 }
       );
     }
@@ -126,7 +115,7 @@ export async function POST(request: NextRequest) {
       programId
     } = body;
 
-    // Validation
+    // Validation: Name, Role, and at least one login identifier are required
     if (!name || !password || !role) {
       return NextResponse.json(
         { error: 'Name, password, and role are required' },
@@ -134,15 +123,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Department users can only create users in their college
-    if (user.role === 'DEPARTMENT') {
-      if (collegeId && collegeId !== user.collegeId) {
-        return NextResponse.json(
-          { error: 'You can only create users in your college' },
-          { status: 403 }
-        );
-      }
+    if (!email && !employeeId) {
+      return NextResponse.json(
+        { error: 'At least one of email or employee ID is required for account identification' },
+        { status: 400 }
+      );
     }
+
+    // Password strength check
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters long' },
+        { status: 400 }
+      );
+    }
+
 
     // Check if email already exists
     if (email) {
@@ -183,9 +178,6 @@ export async function POST(request: NextRequest) {
 
     // Determine college ID for new user
     let finalCollegeId = collegeId;
-    if (user.role === 'DEPARTMENT') {
-      finalCollegeId = user.collegeId;
-    }
 
     // Hash password
     const hashedPassword = await hashPassword(password);

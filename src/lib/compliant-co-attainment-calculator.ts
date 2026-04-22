@@ -282,7 +282,7 @@ export class CompliantCOAttainmentCalculator {
 
       // Get student, CO, and section info
       const [student, co, section] = await Promise.all([
-        db.user.findUnique({
+        db.student.findUnique({
           where: { id: studentId },
           select: { name: true, studentId: true }
         }),

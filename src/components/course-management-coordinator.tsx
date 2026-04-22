@@ -238,7 +238,7 @@ function CourseCategory({
                         </SelectContent>
                       </Select>
                     )}
-                    <Link href={`/courses/${course.id}/manage`}>
+                    <Link href={`/courses/${course.id}`}>
                       <Button variant="outline" size="sm" className="hover:bg-red-50 hover:border-red-300" disabled={isUpdating(course.id) || isDeleting(course.id)}>
                         Manage
                       </Button>

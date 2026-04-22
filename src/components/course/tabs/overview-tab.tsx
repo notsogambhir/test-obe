@@ -6,8 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Settings, Target, BarChart3, Info } from 'lucide-react';
+import { Settings, Target, TrendingUp } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
 interface CourseSettings {
@@ -35,46 +36,18 @@ export function OverviewTab({ courseId, courseData }: OverviewTabProps) {
 
   const isProgramCoordinator = user?.role === 'PROGRAM_COORDINATOR';
 
-  // Add effect to handle course changes
   useEffect(() => {
-    console.log(`🔄 Course changed to: ${courseId}`);
-    // Reset settings to defaults before fetching
-    setSettings({
-      coTarget: 60,
-      level1Threshold: 60,
-      level2Threshold: 70,
-      level3Threshold: 80,
-    });
-    setIsEditing(false);
-    fetchCourseSettings();
-  }, [courseId]);
-
-  const fetchCourseSettings = async () => {
-    try {
-      console.log(`🔍 Fetching course settings for courseId: ${courseId}`);
-      const response = await fetch(`/api/courses/${courseId}/settings?t=${Date.now()}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch course settings');
-      }
-      const data = await response.json();
-      console.log(`📊 Received course settings for ${courseId}:`, data);
+    if (courseData) {
       setSettings({
-        coTarget: data.coTarget,
-        level1Threshold: data.level1Threshold,
-        level2Threshold: data.level2Threshold,
-        level3Threshold: data.level3Threshold,
-      });
-    } catch (error) {
-      console.error('Failed to fetch course settings:', error);
-      toast({
-        title: "Error",
-        description: "Failed to fetch course settings",
-        variant: "destructive",
+        coTarget: courseData.targetPercentage ?? 60,
+        level1Threshold: courseData.level1Threshold ?? 60,
+        level2Threshold: courseData.level2Threshold ?? 70,
+        level3Threshold: courseData.level3Threshold ?? 80,
       });
     }
-  };
+  }, [courseData]);
 
-  const handleSave = async () => {
+  const handleSaveSettings = async () => {
     if (!isProgramCoordinator) {
       toast({
         title: "Permission Denied",
@@ -86,30 +59,30 @@ export function OverviewTab({ courseId, courseData }: OverviewTabProps) {
 
     setLoading(true);
     try {
-      console.log(`💾 Saving course settings for courseId: ${courseId}`, settings);
-      const response = await fetch(`/api/courses/${courseId}/settings`, {
-        method: 'PUT',
+      const response = await fetch(`/api/courses/${courseId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(settings),
+        body: JSON.stringify({
+          targetPercentage: settings.coTarget,
+          level1Threshold: settings.level1Threshold,
+          level2Threshold: settings.level2Threshold,
+          level3Threshold: settings.level3Threshold,
+        }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update course settings');
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update settings');
       }
-
-      const result = await response.json();
-      console.log(`✅ Course settings saved successfully for ${courseId}:`, result);
-
+      
       toast({
         title: "Success",
         description: "Course settings updated successfully",
       });
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to update course settings:', error);
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to update course settings",
@@ -120,149 +93,189 @@ export function OverviewTab({ courseId, courseData }: OverviewTabProps) {
     }
   };
 
-  const handleCancel = () => {
-    fetchCourseSettings();
-    setIsEditing(false);
+  const handleInputChange = (field: keyof CourseSettings, value: number) => {
+    setSettings(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   return (
-    <div className="space-y-4">
-      {/* Debug Info - Remove in production */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="bg-yellow-50 border border-yellow-200 rounded p-2 text-xs">
-          <p><strong>Debug Info:</strong></p>
-          <p>Course ID: {courseId}</p>
-          <p>Current Settings: {JSON.stringify(settings)}</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h3 className="text-lg font-semibold text-gray-900">Course Overview Settings</h3>
+          <p className="text-sm text-gray-600">
+            Configure fundamental parameters for course outcome evaluation
+          </p>
         </div>
-      )}
-      
-      <Card className="p-3">
-        <CardHeader className="px-0 pt-0 pb-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              <CardTitle className="text-sm">Course Settings</CardTitle>
-            </div>
-            {!isProgramCoordinator && (
-              <Badge variant="outline" className="text-orange-600 border-orange-200 text-xs">
-                Read-only (PC only)
-              </Badge>
+        
+        {isProgramCoordinator && (
+          <div className="flex gap-2">
+            {isEditing ? (
+              <>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditing(false)}
+                  disabled={loading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleSaveSettings}
+                  disabled={loading}
+                >
+                  {loading ? 'Saving...' : 'Save Changes'}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center gap-2"
+              >
+                <Settings className="h-4 w-4" />
+                Edit Settings
+              </Button>
             )}
           </div>
-        </CardHeader>
-        <CardContent className="px-0 pb-0 space-y-3">
-          {/* CO Target */}
-          <div className="space-y-1">
-            <Label htmlFor="co-target" className="flex items-center gap-2 text-xs">
-              <Target className="h-3 w-3" />
-              CO Target Percentage
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="co-target"
-                type="number"
-                min="0"
-                max="100"
-                value={settings.coTarget}
-                onChange={(e) => setSettings(prev => ({ ...prev, coTarget: parseInt(e.target.value) || 0 }))}
-                disabled={!isEditing || !isProgramCoordinator}
-                className="w-20 h-7"
-              />
-            </div>
-          </div>
+        )}
+      </div>
 
-          {/* Attainment Level Thresholds */}
-          <div className="space-y-1">
-            <Label className="flex items-center gap-2 text-xs">
-              <BarChart3 className="h-3 w-3" />
+      {/* Permission Notice */}
+      {!isProgramCoordinator && (
+        <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <Settings className="h-4 w-4 text-amber-600" />
+            <p className="text-sm text-amber-800">
+              <strong>Read-only View:</strong> Only Program Coordinators can edit course settings.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* CO Target Settings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Target className="h-5 w-5" />
+              CO Target Settings
+            </CardTitle>
+            <CardDescription>
+              Define the success criteria for Course Outcomes
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="co-target">CO Target Percentage</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="co-target"
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={settings.coTarget}
+                  onChange={(e) => handleInputChange('coTarget', parseInt(e.target.value))}
+                  disabled={!isEditing || !isProgramCoordinator}
+                  className="flex-1"
+                />
+                <span className="text-sm text-gray-600">%</span>
+              </div>
+              <p className="text-xs text-gray-500">
+                Minimum percentage a student must achieve to be considered successful in a CO
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Attainment Level Thresholds */}
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
               Attainment Level Thresholds
-            </Label>
-            <div className="grid grid-cols-3 gap-2">
-              <div className="space-y-1">
-                <Label htmlFor="level1-threshold" className="text-xs">Level 1</Label>
-                <div className="flex items-center gap-1">
+            </CardTitle>
+            <CardDescription>
+              Configure grading rules for class-level CO attainment (NBA Compliance)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="space-y-2">
+                <Label htmlFor="level1-threshold">Level 1 Threshold</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     id="level1-threshold"
                     type="number"
                     min="0"
                     max="100"
                     value={settings.level1Threshold}
-                    onChange={(e) => setSettings(prev => ({ ...prev, level1Threshold: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => handleInputChange('level1Threshold', parseInt(e.target.value))}
                     disabled={!isEditing || !isProgramCoordinator}
-                    className="w-16 h-7"
+                    className="flex-1"
                   />
-                  <span className="text-xs">%</span>
+                  <span className="text-sm text-gray-600">%</span>
                 </div>
+                <p className="text-xs text-gray-500">
+                  Minimum students achieving CO target for Level 1
+                </p>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="level2-threshold" className="text-xs">Level 2</Label>
-                <div className="flex items-center gap-1">
+
+              <div className="space-y-2">
+                <Label htmlFor="level2-threshold">Level 2 Threshold</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     id="level2-threshold"
                     type="number"
                     min="0"
                     max="100"
                     value={settings.level2Threshold}
-                    onChange={(e) => setSettings(prev => ({ ...prev, level2Threshold: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => handleInputChange('level2Threshold', parseInt(e.target.value))}
                     disabled={!isEditing || !isProgramCoordinator}
-                    className="w-16 h-7"
+                    className="flex-1"
                   />
-                  <span className="text-xs">%</span>
+                  <span className="text-sm text-gray-600">%</span>
                 </div>
+                <p className="text-xs text-gray-500">
+                  Minimum students achieving CO target for Level 2
+                </p>
               </div>
-              <div className="space-y-1">
-                <Label htmlFor="level3-threshold" className="text-xs">Level 3</Label>
-                <div className="flex items-center gap-1">
+
+              <div className="space-y-2">
+                <Label htmlFor="level3-threshold">Level 3 Threshold</Label>
+                <div className="flex items-center gap-2">
                   <Input
                     id="level3-threshold"
                     type="number"
                     min="0"
                     max="100"
                     value={settings.level3Threshold}
-                    onChange={(e) => setSettings(prev => ({ ...prev, level3Threshold: parseInt(e.target.value) || 0 }))}
+                    onChange={(e) => handleInputChange('level3Threshold', parseInt(e.target.value))}
                     disabled={!isEditing || !isProgramCoordinator}
-                    className="w-16 h-7"
+                    className="flex-1"
                   />
-                  <span className="text-xs">%</span>
+                  <span className="text-sm text-gray-600">%</span>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          {isProgramCoordinator && (
-            <div className="flex gap-2 pt-2 border-t">
-              {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)} className="h-7 px-2 text-xs">
-                  Edit Settings
-                </Button>
-              ) : (
-                <>
-                  <Button onClick={handleSave} disabled={loading} className="h-7 px-2 text-xs">
-                    {loading ? 'Saving...' : 'Save Changes'}
-                  </Button>
-                  <Button variant="outline" onClick={handleCancel} className="h-7 px-2 text-xs">
-                    Cancel
-                  </Button>
-                </>
-              )}
-            </div>
-          )}
-
-          {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 rounded p-2">
-            <div className="flex items-start gap-2">
-              <Info className="h-3 w-3 text-blue-600 mt-0.5" />
-              <div className="text-xs text-blue-800">
-                <p className="font-medium">Course Settings</p>
-                <p className="text-blue-700">
-                  Configure CO targets and attainment level thresholds for outcome calculations.
+                <p className="text-xs text-gray-500">
+                  Minimum students achieving CO target for Level 3
                 </p>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+
+            {/* Threshold Validation */}
+            <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+              <p className="text-sm font-medium text-gray-700 mb-2">Threshold Logic:</p>
+              <div className="text-xs text-gray-600 space-y-1">
+                <p>• <strong>Level 0:</strong> &lt; {settings.level1Threshold}% of students meet CO target</p>
+                <p>• <strong>Level 1:</strong> ≥ {settings.level1Threshold}% and &lt; {settings.level2Threshold}% of students meet CO target</p>
+                <p>• <strong>Level 2:</strong> ≥ {settings.level2Threshold}% and &lt; {settings.level3Threshold}% of students meet CO target</p>
+                <p>• <strong>Level 3:</strong> ≥ {settings.level3Threshold}% of students meet CO target</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

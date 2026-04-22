@@ -4,10 +4,21 @@ import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { AuthUser, DbUser, User } from '@/types/user';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+const JWT_SECRET = process.env.JWT_SECRET;
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+if (!JWT_SECRET) {
+  if (IS_PROD) {
+    throw new Error('FATAL ERROR: JWT_SECRET environment variable is not defined in production.');
+  }
+  console.warn('⚠️ WARNING: JWT_SECRET is not defined. Using insecure default for development only.');
+}
+
+const SECRET_KEY = JWT_SECRET || 'your-secret-key';
+
 
 // Role hierarchy for cascading permissions (higher number = higher privilege)
-// Note: STUDENT is explicitly excluded from hierarchy as it's not an administrative role
+// Role hierarchy for cascading permissions (higher number = higher privilege)
 export const ROLE_HIERARCHY = {
   'ADMIN': 50,
   'UNIVERSITY': 40,
@@ -16,7 +27,7 @@ export const ROLE_HIERARCHY = {
   'TEACHER': 10,
 } as const;
 
-// Type for administrative roles (excluding STUDENT)
+// Type for administrative roles
 type AdministrativeRole = keyof typeof ROLE_HIERARCHY;
 
 export type { AuthUser };
@@ -29,7 +40,6 @@ export function transformDbUserToUser(dbUser: DbUser): User {
     role: dbUser.role,
     collegeId: dbUser.collegeId || undefined,
     programId: dbUser.programId || undefined,
-    batchId: dbUser.batchId || undefined,
   };
 }
 
@@ -41,7 +51,6 @@ export function transformDbUserToAuthUser(dbUser: DbUser): AuthUser {
     role: dbUser.role,
     collegeId: dbUser.collegeId,
     programId: dbUser.programId,
-    batchId: dbUser.batchId,
   };
 }
 
@@ -62,16 +71,15 @@ export function generateToken(user: User | AuthUser): string {
       role: user.role,
       collegeId: user.collegeId,
       programId: user.programId,
-      batchId: user.batchId,
     },
-    JWT_SECRET,
+    SECRET_KEY,
     { expiresIn: '7d' }
   );
 }
 
 export function verifyToken(token: string): AuthUser | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as AuthUser;
+    const decoded = jwt.verify(token, SECRET_KEY) as AuthUser;
     return decoded;
   } catch (error) {
     return null;
@@ -123,11 +131,6 @@ export async function authenticateUser(email: string, password: string, collegeI
  * @returns true if user has required role or higher, false otherwise
  */
 export function hasRole(userRole: string, requiredRole: string): boolean {
-  // If either role is STUDENT, cascading logic does not apply
-  if (userRole === 'STUDENT' || requiredRole === 'STUDENT') {
-    return false; // STUDENT role is excluded from administrative hierarchy entirely
-  }
-  
   // Check if both roles are in the administrative hierarchy
   const userLevel = ROLE_HIERARCHY[userRole as AdministrativeRole];
   const requiredLevel = ROLE_HIERARCHY[requiredRole as AdministrativeRole];

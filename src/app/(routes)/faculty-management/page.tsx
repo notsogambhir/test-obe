@@ -98,23 +98,17 @@ export default function FacultyManagement() {
         // Filter based on current user role
         let filteredUsers = data;
         if (user?.role === 'DEPARTMENT') {
-          // Department users can see all non-student users in their college
-          filteredUsers = data.filter((u: User) => 
-            u.collegeId === user.collegeId && u.role !== 'STUDENT'
-          );
+          // Department users can see all users in their college
+          filteredUsers = data.filter((u: User) => u.collegeId === user.collegeId);
         } else if (user?.role === 'PROGRAM_COORDINATOR') {
-          // Program coordinators can see all non-student users in their program
-          filteredUsers = data.filter((u: User) => 
-            u.programId === user.programId && u.role !== 'STUDENT'
-          );
+          // Program coordinators can see all users in their program
+          filteredUsers = data.filter((u: User) => u.programId === user.programId);
         } else if (user?.role === 'ADMIN' || user?.role === 'UNIVERSITY') {
-          // Admin and University users can see all faculty (non-students) across the system
-          filteredUsers = data.filter((u: User) => u.role !== 'STUDENT');
+          // Admin and University users can see all faculty across the system
+          filteredUsers = data;
         } else {
-          // Program coordinators see faculty in their program only
-          filteredUsers = data.filter((u: User) => 
-            u.programId === user?.programId && u.role !== 'STUDENT'
-          );
+          // Others see faculty in their program only
+          filteredUsers = data.filter((u: User) => u.programId === user?.programId);
         }
         setUsers(filteredUsers);
       }
@@ -339,8 +333,8 @@ export default function FacultyManagement() {
                         <Badge variant="outline" className="text-xs">
                           {userItem.role.replace('_', ' ')}
                         </Badge>
-                        {/* Show college for all users except students */}
-                        {userItem.college && userItem.role !== 'STUDENT' ? (
+                        {/* Show college for all faculty users */}
+                        {userItem.college ? (
                           <Badge variant="secondary" className="text-xs">
                             {userItem.college.name}
                           </Badge>

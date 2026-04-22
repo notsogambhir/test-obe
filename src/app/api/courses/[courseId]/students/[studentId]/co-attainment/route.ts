@@ -28,13 +28,12 @@ export async function GET(
       return NextResponse.json({ error: 'Authorization required' }, { status: 401 });
     }
 
-    // Check if user can access this data (own data as student, or teacher/admin)
+    // Check if user can access this data (teacher/admin/management)
     const canAccess = user.role === 'ADMIN' || 
                      user.role === 'UNIVERSITY' || 
                      user.role === 'DEPARTMENT' || 
                      user.role === 'PROGRAM_COORDINATOR' || 
-                     user.role === 'TEACHER' || 
-                     (user.role === 'STUDENT' && user.id === studentId);
+                     user.role === 'TEACHER';
 
     if (!canAccess) {
       return NextResponse.json(

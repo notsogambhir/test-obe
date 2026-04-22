@@ -215,7 +215,8 @@ export class MockDataGenerator {
             programId: program.id
           }
         });
-        createdBatches.push(created);
+        // Include program context for use in subsequent generation steps
+        createdBatches.push({ ...created, program });
       }
     }
 
@@ -250,12 +251,10 @@ export class MockDataGenerator {
         const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
         const studentId = `${batch.name.replace('-', '')}${String(studentCounter).padStart(3, '0')}`;
         
-        const created = await db.user.create({
+        const created = await db.student.create({
           data: {
             name: `${firstName} ${lastName}`,
             email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}${studentCounter}@mockmail.edu`,
-            password: 'password123', // Default password
-            role: 'STUDENT',
             studentId: studentId,
             collegeId: batch.program.collegeId,
             programId: batch.programId,
@@ -546,35 +545,42 @@ export class MockDataGenerator {
       }
     ];
 
-    const programCoordinators = [];
-    for (const program of [...new Set(students.map(s => s.programId))]) {
-      const programCoordinators = [
+    const programCoordinators: any[] = [];
+    // Get unique program IDs and find their corresponding program objects
+    const uniqueProgramIds = [...new Set(students.map(s => s.programId))];
+    
+    for (const programId of uniqueProgramIds) {
+      // Find a student from this program to get the college context
+      const sampleStudent = students.find(s => s.programId === programId);
+      if (!sampleStudent) continue;
+
+      const pcAndTeachers = [
         {
-          name: `PC ${program.code}`,
-          email: `pc.${program.code.toLowerCase()}@college.edu`,
+          name: `PC Program ${programId.substring(0, 4)}`,
+          email: `pc.${programId.toLowerCase().substring(0, 8)}@college.edu`,
           password: 'pc123',
           role: 'PROGRAM_COORDINATOR',
-          collegeId: program.collegeId,
-          programId: program.id
+          collegeId: sampleStudent.collegeId,
+          programId: programId
         },
         {
-          name: `Teacher 1 ${program.code}`,
-          email: `teacher1.${program.code.toLowerCase()}@college.edu`,
+          name: `Teacher 1 Program ${programId.substring(0, 4)}`,
+          email: `teacher1.${programId.toLowerCase().substring(0, 8)}@college.edu`,
           password: 'teacher123',
           role: 'TEACHER',
-          collegeId: program.collegeId,
-          programId: program.id
+          collegeId: sampleStudent.collegeId,
+          programId: programId
         },
         {
-          name: `Teacher 2 ${program.code}`,
-          email: `teacher2.${program.code.toLowerCase()}@college.edu`,
+          name: `Teacher 2 Program ${programId.substring(0, 4)}`,
+          email: `teacher2.${programId.toLowerCase().substring(0, 8)}@college.edu`,
           password: 'teacher123',
           role: 'TEACHER',
-          collegeId: program.collegeId,
-          programId: program.id
+          collegeId: sampleStudent.collegeId,
+          programId: programId
         }
       ];
-      programCoordinators.push(...programCoordinators);
+      programCoordinators.push(...pcAndTeachers);
     }
 
     const allUsers = [...adminUsers, ...programCoordinators];
@@ -639,17 +645,16 @@ export class MockDataGenerator {
     
     try {
       // Delete in order to respect foreign key constraints
+      await db.studentMark.deleteMany({});
+      await db.cOAttainment.deleteMany({});
       await db.enrollment.deleteMany({});
       await db.cOPOMapping.deleteMany({});
       await db.cO.deleteMany({});
       await db.course.deleteMany({});
       await db.pO.deleteMany({});
       await db.batch.deleteMany({});
-      await db.user.deleteMany({
-        where: {
-          role: 'STUDENT'
-        }
-      });
+      await db.student.deleteMany({});
+      await db.user.deleteMany({});
       await db.program.deleteMany({});
       await db.college.deleteMany({});
 

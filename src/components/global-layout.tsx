@@ -15,7 +15,6 @@ interface User {
   collegeId?: string;
   departmentId?: string;
   programId?: string;
-  batchId?: string;
 }
 
 interface GlobalLayoutProps {
@@ -109,7 +108,7 @@ const GlobalLayout = memo(function GlobalLayout({ user, children }: GlobalLayout
   const handleBackToSelection = useCallback(() => {
     // Clear program and batch selections
     if (user) {
-      updateUserSelections({ programId: undefined, batchId: undefined });
+      updateUserSelections({ programId: undefined });
     }
   }, [user, updateUserSelections]);
 

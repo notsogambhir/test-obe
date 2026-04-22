@@ -60,7 +60,9 @@ export function StudentsTab({ courseId, courseData }: StudentsTabProps) {
       const response = await fetch(`/api/courses/${courseId}/roster`);
       if (response.ok) {
         const data = await response.json();
-        setStudents(data || []);
+        // The API now returns { roster, summary }
+        const roster = (data.roster || []).map((item: any) => item.student);
+        setStudents(roster);
       } else {
         const errorData = await response.json();
         toast({
@@ -309,7 +311,7 @@ export function StudentsTab({ courseId, courseData }: StudentsTabProps) {
               <div>
                 <div className="text-lg font-semibold">
                   {students.length > 0 ? Math.max(...students.map(s => {
-                    const rollNo = s.studentRollNo.replace(/\\D/g, '');
+                    const rollNo = s.studentRollNo.replace(/\D/g, '');
                     return parseInt(rollNo) || 0;
                   })) : 0}
                 </div>

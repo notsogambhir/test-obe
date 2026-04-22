@@ -86,9 +86,8 @@ export async function POST(
       
       // Find all active students who should be enrolled in this course
       // Students should be enrolled if they belong to the same batch and are active
-      const eligibleStudents = await db.user.findMany({
+      const eligibleStudents = await db.student.findMany({
         where: {
-          role: 'STUDENT',
           isActive: true,
           batchId: course.batchId,
           // Only enroll students who are assigned to this batch's program

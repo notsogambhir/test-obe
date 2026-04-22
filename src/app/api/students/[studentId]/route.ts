@@ -48,8 +48,8 @@ export async function GET(
       return NextResponse.json({ error: 'Student ID is required' }, { status: 400 });
     }
 
-    const student = await db.user.findUnique({
-      where: { id: studentId, role: 'STUDENT' },
+    const student = await db.student.findUnique({
+      where: { id: studentId },
       include: {
         batch: {
           include: {
@@ -132,8 +132,8 @@ export async function PUT(
     const validatedData = updateStudentSchema.parse(body);
 
     // Check if student exists
-    const existingStudent = await db.user.findUnique({
-      where: { id: studentId, role: 'STUDENT' },
+    const existingStudent = await db.student.findUnique({
+      where: { id: studentId },
     });
 
     if (!existingStudent) {
@@ -158,7 +158,7 @@ export async function PUT(
     }
 
     // Update the student
-    const updatedStudent = await db.user.update({
+    const updatedStudent = await db.student.update({
       where: { id: studentId },
       data: {
         ...(validatedData.name && { name: validatedData.name.trim() }),
@@ -245,8 +245,8 @@ export async function DELETE(
     const { studentId } = await params;
 
     // Check if student exists
-    const existingStudent = await db.user.findUnique({
-      where: { id: studentId, role: 'STUDENT' },
+    const existingStudent = await db.student.findUnique({
+      where: { id: studentId },
     });
 
     if (!existingStudent) {
@@ -256,10 +256,9 @@ export async function DELETE(
       );
     }
 
-    // Soft delete by setting isActive to false
-    await db.user.update({
+    // Delete student
+    await db.student.delete({
       where: { id: studentId },
-      data: { isActive: false },
     });
 
     return NextResponse.json(

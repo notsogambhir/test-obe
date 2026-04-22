@@ -103,8 +103,6 @@ export async function POST(request: NextRequest) {
       where: { id: userId },
       data: {
         programId: primaryProgramId,
-        // Clear batchId when changing program to avoid conflicts
-        batchId: null
       },
       include: {
         program: {

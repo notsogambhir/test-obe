@@ -56,7 +56,7 @@ async function handleSectionUpdate(
     }
 
     // Fetch student details to verify existence and permissions
-    const student = await db.user.findUnique({
+    const student = await db.student.findUnique({
       where: { id: studentId },
       include: {
         college: {
@@ -88,10 +88,6 @@ async function handleSectionUpdate(
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    if (student.role !== 'STUDENT') {
-      return NextResponse.json({ error: 'Only students can be assigned to sections' }, { status: 400 });
-    }
-
     // Check permissions - Admin, University, and Department can assign students to sections
     console.log('=== PERMISSION CHECK ===');
     console.log('User role:', user?.role);
@@ -106,8 +102,6 @@ async function handleSectionUpdate(
       console.log('🔍 Department access - checking college permissions');
 
       // Check if department user has access to this student's college
-      // If student has a collegeId, it must match
-      // If student has no collegeId, check if their program belongs to department user's college
       let hasAccess = false;
       
       if (student?.collegeId) {
@@ -183,7 +177,7 @@ async function handleSectionUpdate(
     }
 
     // Update student's section assignment
-    const updatedStudent = await db.user.update({
+    const updatedStudent = await db.student.update({
       where: { id: studentId },
       data: { sectionId },
       include: {

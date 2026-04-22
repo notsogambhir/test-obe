@@ -12,16 +12,16 @@ export default function NotFound() {
           <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4">
             <FileX className="h-6 w-6 text-muted-foreground" />
           </div>
-          <CardTitle className="text-2xl">Course not found</CardTitle>
+          <CardTitle className="text-2xl">Management page not found</CardTitle>
           <CardDescription>
-            Sorry, we couldn't find the course you're looking for.
+            Sorry, we couldn't find the management page you're looking for.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-center">
             <p className="text-4xl font-bold text-muted-foreground">404</p>
             <p className="text-sm text-muted-foreground mt-2">
-              The course you are looking for might have been removed or is unavailable.
+              The management page you are looking for might have been removed or is unavailable.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">

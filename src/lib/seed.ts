@@ -5,6 +5,9 @@ async function seed() {
   try {
     console.log('🌱 Starting comprehensive database seeding...');
     
+    // Pre-calculate hashedPassword for performance and consistency
+    const hashedPassword = await bcrypt.hash('password123', 10);
+
     // Clean existing data in correct order (respecting foreign key constraints)
     console.log('🧹 Cleaning existing data...');
     await db.studentMark.deleteMany();
@@ -18,6 +21,7 @@ async function seed() {
     await db.course.deleteMany();
     await db.teacherAssignment.deleteMany();
     await db.user.deleteMany();
+    await db.student.deleteMany();
     await db.section.deleteMany();
     await db.batch.deleteMany();
     await db.pO.deleteMany();
@@ -229,103 +233,103 @@ async function seed() {
 
     // Create Users with comprehensive roles
     console.log('👥 Creating users...');
-    const hashedPassword = await bcrypt.hash('password123', 10);
+    const users: any[] = [];
+    const students: any[] = [];
     
-    const users = await Promise.all([
-      // Admin Users
-      db.user.create({
-        data: {
-          email: 'admin@obeportal.com',
-          password: hashedPassword,
-          name: 'System Administrator',
-          role: 'ADMIN',
-          collegeId: colleges[0].id,
-        },
-      }),
-      db.user.create({
-        data: {
-          email: 'university@obeportal.com',
-          password: hashedPassword,
-          name: 'University Administrator',
-          role: 'UNIVERSITY',
-          collegeId: colleges[0].id,
-        },
-      }),
-      
-      // Department Heads
-      db.user.create({
-        data: {
-          email: 'cse@obeportal.com',
-          password: hashedPassword,
-          name: 'CSE Department Head',
-          role: 'DEPARTMENT',
-          collegeId: colleges[0].id,
-        },
-      }),
-      db.user.create({
-        data: {
-          email: 'business@obeportal.com',
-          password: hashedPassword,
-          name: 'Business Department Head',
-          role: 'DEPARTMENT',
-          collegeId: colleges[1].id,
-        },
-      }),
-      
-      // Multiple Teachers per program (NEW)
-      ...programs.map((program) => 
-        db.user.create({
-          data: {
-            email: `${program.code.toLowerCase()}.teacher@obeportal.com`,
-            password: hashedPassword,
-            name: `Teacher - ${program.name}`,
-            role: 'TEACHER',
-            collegeId: program.collegeId,
-            programId: program.id,
-          },
-        })
-      ),
-      
-      // Program Coordinators (UPDATED)
-      ...programs.map((program) => 
-        db.user.create({
-          data: {
-            email: `pc.${program.code.toLowerCase()}@obeportal.com`,
-            password: hashedPassword,
-            name: `Program Coordinator - ${program.name}`,
-            role: 'PROGRAM_COORDINATOR',
-            collegeId: program.collegeId,
-            programId: program.id,
-          },
-        })
-      ),
-      
-      // Students (EXTENDED)
-      ...batches.map((batch, batchIndex) => {
-        const studentsPerBatch = 5; // Reduced for performance
-        const program = programs.find(p => p.id === batch.programId);
-        const batchSections = sections.filter(s => s.batchId === batch.id);
-        return Array.from({ length: studentsPerBatch }, (_, i) => {
-          const studentNumber = batchIndex * studentsPerBatch + i + 1;
-          const sectionIndex = i % batchSections.length; // Distribute students across sections
-          return db.user.create({
-            data: {
-              email: `student${studentNumber}@obeportal.com`,
-              studentId: `STU${String(studentNumber).padStart(4, '0')}`,
-              password: hashedPassword,
-              name: `Student ${studentNumber} - ${program?.name || 'Unknown Program'}`,
-              role: 'STUDENT',
-              collegeId: program?.collegeId,
-              programId: batch.programId,
-              batchId: batch.id,
-              sectionId: batchSections[sectionIndex]?.id,
-            },
-          });
-        });
-      }).flat(),
-    ]);
+    // Admin & University
+    const admin = await db.user.create({
+      data: {
+        email: 'admin@obeportal.com',
+        password: hashedPassword,
+        name: 'System Administrator',
+        role: 'ADMIN',
+        collegeId: colleges[0].id,
+      },
+    });
+    users.push(admin);
+    
+    const university = await db.user.create({
+      data: {
+        email: 'university@obeportal.com',
+        password: hashedPassword,
+        name: 'University Administrator',
+        role: 'UNIVERSITY',
+        collegeId: colleges[0].id,
+      },
+    });
+    users.push(university);
 
-      console.log(`✅ Created ${users.length} users`);
+    // Department Heads
+    for (const college of colleges.slice(0, 2)) {
+      const deptHead = await db.user.create({
+        data: {
+          email: `${college.code.toLowerCase()}.head@obeportal.com`,
+          password: hashedPassword,
+          name: `${college.code} Department Head`,
+          role: 'DEPARTMENT',
+          collegeId: college.id,
+        },
+      });
+      users.push(deptHead);
+    }
+
+    // Teachers & PCs
+    for (const program of programs) {
+      const teacher = await db.user.create({
+        data: {
+          email: `${program.code.toLowerCase()}.teacher@obeportal.com`,
+          password: hashedPassword,
+          name: `Teacher - ${program.name}`,
+          role: 'TEACHER',
+          collegeId: program.collegeId,
+          programId: program.id,
+        },
+      });
+      users.push(teacher);
+
+      const pc = await db.user.create({
+        data: {
+          email: `pc.${program.code.toLowerCase()}@obeportal.com`,
+          password: hashedPassword,
+          name: `Program Coordinator - ${program.name}`,
+          role: 'PROGRAM_COORDINATOR',
+          collegeId: program.collegeId,
+          programId: program.id,
+        },
+      });
+      users.push(pc);
+    }
+
+    // Students
+    console.log('👨‍🎓 Creating students...');
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      const studentsPerBatch = 5;
+      const program = programs.find(p => p.id === batch.programId);
+      const batchSections = sections.filter(s => s.batchId === batch.id);
+      
+      for (let i = 0; i < studentsPerBatch; i++) {
+        const studentNumber = batchIndex * studentsPerBatch + i + 1;
+        const sectionIndex = i % batchSections.length;
+        const student = await db.student.create({
+          data: {
+            email: `student${studentNumber}@obeportal.com`,
+            studentId: `STU${String(studentNumber).padStart(4, '0')}`,
+            name: `Student ${studentNumber} - ${program?.name || 'Unknown Program'}`,
+            collegeId: program!.collegeId,
+            programId: batch.programId,
+            batchId: batch.id,
+            sectionId: batchSections[sectionIndex]?.id,
+          },
+        });
+        students.push(student);
+      }
+    }
+
+    // Sequential separation was already done above
+
+    console.log(`✅ Created ${users.length} faculty/admin users`);
+    console.log(`✅ Created ${students.length} students`);
 
     // Create Courses (EXTENDED)
     console.log('📚 Creating courses...');
@@ -371,20 +375,19 @@ async function seed() {
 
     console.log(`✅ Created ${cos.length} Course Outcomes`);
 
-    // Create Enrollments
     console.log('📝 Creating enrollments...');
     const enrollments: any[] = [];
-    for (const user of users.filter(u => u.role === 'STUDENT')) {
+    for (const student of students) {
       const batchCourses = courses.filter(c => {
         const courseBatch = batches.find(b => b.id === c.batchId);
-        return courseBatch && courseBatch.id === user.batchId;
+        return courseBatch && courseBatch.id === student.batchId;
       });
       
       for (const course of batchCourses) {
         const enrollment = await db.enrollment.create({
           data: {
             courseId: course.id,
-            studentId: user.id,
+            studentId: student.id,
           }
         });
         enrollments.push(enrollment);
@@ -491,12 +494,10 @@ async function seed() {
 
     console.log(`✅ Created ${questionCOMappings.length} Question-CO mappings`);
 
-    // Create Student Marks (for first 10 students for performance)
-    console.log('📈 Creating student marks...');
+    const studentList = students.slice(0, 10);
     const studentMarks: any[] = [];
-    const studentUsers = users.filter(u => u.role === 'STUDENT').slice(0, 10);
     
-    for (const student of studentUsers) {
+    for (const student of studentList) {
       const studentEnrollments = enrollments.filter(e => e.studentId === student.id);
       
       for (const enrollment of studentEnrollments) {
@@ -530,7 +531,7 @@ async function seed() {
     console.log('🎯 Calculating CO attainments...');
     const coAttainments: any[] = [];
     
-    for (const student of studentUsers) {
+    for (const student of studentList) {
       const studentEnrollments = enrollments.filter(e => e.studentId === student.id);
       
       for (const enrollment of studentEnrollments) {
@@ -616,10 +617,9 @@ async function seed() {
       console.log(`  ${coordinator.name}: ${coordinator.email}`);
     });
     console.log('');
-    console.log('Students (EXTENDED):');
-    console.log(`  Total: ${users.filter(u => u.role === 'STUDENT').length} students`);
-    console.log('  Email pattern: student1@obeportal.com to student25@obeportal.com');
-    console.log('  Password: password123');
+    console.log('Students (Academic Records):');
+    console.log(`  Total: ${students.length} students`);
+    console.log('  Note: Students are academic entities and do not have login access.');
     console.log('');
     console.log('✨ NEW FEATURES ADDED:');
     console.log('✅ Multiple teachers per program for realistic teaching load');
@@ -652,3 +652,12 @@ async function seed() {
 
 // Export the seed function for external use
 export { seed };
+
+// Run seed if executed directly
+if (process.argv[1]?.endsWith('seed.ts')) {
+  seed()
+    .catch((e) => {
+      console.error(e);
+      process.exit(1);
+    });
+}

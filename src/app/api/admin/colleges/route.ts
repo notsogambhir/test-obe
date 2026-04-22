@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, extractTokenFromRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = extractTokenFromRequest(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -19,7 +19,8 @@ export async function GET(request: NextRequest) {
         _count: {
           select: {
             programs: true,
-            users: true
+            users: true,
+            students: true
           }
         }
       },
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('auth-token')?.value;
+    const token = extractTokenFromRequest(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

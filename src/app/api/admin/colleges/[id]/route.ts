@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, extractTokenFromRequest } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
@@ -8,7 +8,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    const token = request.cookies.get('auth-token')?.value;
+    const token = extractTokenFromRequest(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -87,7 +87,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    const token = request.cookies.get('auth-token')?.value;
+    const token = extractTokenFromRequest(request);
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -104,7 +104,8 @@ export async function DELETE(
         _count: {
           select: {
             programs: true,
-            users: true
+            users: true,
+            students: true
           }
         }
       }
@@ -120,10 +121,11 @@ export async function DELETE(
     // Check if college has associated data
     if (
       existingCollege._count.programs > 0 ||
-      existingCollege._count.users > 0
+      existingCollege._count.users > 0 ||
+      existingCollege._count.students > 0
     ) {
       return NextResponse.json(
-        { error: 'Cannot delete college with associated programs or users' },
+        { error: 'Cannot delete college with associated programs, users, or students' },
         { status: 400 }
       );
     }

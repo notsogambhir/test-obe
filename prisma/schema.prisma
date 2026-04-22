@@ -10,28 +10,43 @@ datasource db {
 model User {
   id                 String              @id @default(cuid())
   email              String?             @unique
-  studentId          String?             @unique
   employeeId         String?             @unique
   password           String
   name               String
   role               UserRole            @default(TEACHER)
   collegeId          String?
   programId          String?
-  batchId            String?
-  sectionId          String?
   isActive           Boolean             @default(true)
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
-  coAttainments      COAttainment[]
-  enrollments        Enrollment[]
-  studentMarks       StudentMark[]
   teacherAssignments TeacherAssignment[]
-  section            Section?            @relation(fields: [sectionId], references: [id])
-  batch              Batch?              @relation("BatchStudents", fields: [batchId], references: [id])
   program            Program?            @relation("ProgramUsers", fields: [programId], references: [id])
   college            College?            @relation(fields: [collegeId], references: [id])
 
   @@map("users")
+}
+
+model Student {
+  id            String         @id @default(cuid())
+  studentId     String         @unique // Roll number / Unique ID
+  name          String
+  email         String?
+  collegeId     String
+  programId     String
+  batchId       String
+  sectionId     String?
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  college       College        @relation(fields: [collegeId], references: [id])
+  program       Program        @relation(fields: [programId], references: [id])
+  batch         Batch          @relation(fields: [batchId], references: [id])
+  section       Section?       @relation(fields: [sectionId], references: [id])
+  enrollments   Enrollment[]
+  coAttainments COAttainment[]
+  studentMarks  StudentMark[]
+
+  @@map("students")
 }
 
 model College {
@@ -44,6 +59,7 @@ model College {
   updatedAt   DateTime  @updatedAt
   programs    Program[]
   users       User[]
+  students    Student[]
 
   @@map("colleges")
 }
@@ -62,6 +78,7 @@ model Program {
   pos         PO[]
   college     College  @relation(fields: [collegeId], references: [id])
   users       User[]   @relation("ProgramUsers")
+  students    Student[]
 
   @@unique([collegeId, code])
   @@map("programs")
@@ -79,7 +96,7 @@ model Batch {
   program   Program   @relation(fields: [programId], references: [id])
   courses   Course[]
   sections  Section[]
-  students  User[]    @relation("BatchStudents")
+  students  Student[]
 
   @@unique([programId, name])
   @@map("batches")
@@ -97,7 +114,7 @@ model Section {
   batch              Batch               @relation(fields: [batchId], references: [id])
   studentMarks       StudentMark[]
   teacherAssignments TeacherAssignment[]
-  students           User[]
+  students           Student[]
 
   @@unique([batchId, name])
   @@map("sections")
@@ -260,7 +277,7 @@ model Enrollment {
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  student   User     @relation(fields: [studentId], references: [id])
+  student   Student  @relation(fields: [studentId], references: [id])
   course    Course   @relation(fields: [courseId], references: [id])
 
   @@unique([courseId, studentId, sectionId])
@@ -277,7 +294,7 @@ model COAttainment {
   metTarget    Boolean
   calculatedAt DateTime @default(now())
   academicYear String?
-  student      User     @relation(fields: [studentId], references: [id])
+  student      Student  @relation(fields: [studentId], references: [id])
   co           CO       @relation(fields: [coId], references: [id])
   section      Section? @relation(fields: [sectionId], references: [id])
   course       Course   @relation(fields: [courseId], references: [id])
@@ -295,7 +312,7 @@ model StudentMark {
   maxMarks      Int
   submittedAt   DateTime @default(now())
   academicYear  String?
-  student       User     @relation(fields: [studentId], references: [id])
+  student       Student  @relation(fields: [studentId], references: [id])
   section       Section? @relation(fields: [sectionId], references: [id])
   question      Question @relation(fields: [questionId], references: [id])
 
@@ -311,7 +328,6 @@ enum UserRole {
   DEPARTMENT
   PROGRAM_COORDINATOR
   TEACHER
-  STUDENT
 }
 
 enum CourseStatus {

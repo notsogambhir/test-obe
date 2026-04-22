@@ -267,33 +267,8 @@ export async function GET(request: NextRequest) {
           break;
           
         default:
-          // For other roles, return limited courses
-          courses = await db.course.findMany({
-            where: {
-              batchId: user.batchId || ''
-            },
-            include: {
-              batch: {
-                include: {
-                  program: {
-                    select: {
-                      name: true,
-                      code: true
-                    }
-                  }
-                }
-              },
-              _count: {
-                select: {
-                  courseOutcomes: true,
-                  assessments: true,
-                  enrollments: true
-                }
-              }
-            },
-            orderBy: { createdAt: 'desc' },
-            take: 100
-          });
+          // For other roles, return empty or based on explicit filters
+          courses = [];
           break;
       }
       

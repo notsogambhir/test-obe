@@ -2,13 +2,12 @@
 export interface DbUser {
   id: string;
   email: string | null;
-  studentId: string | null;
+  employeeId: string | null;
   password: string;
   name: string;
   role: string;
   collegeId: string | null;
   programId: string | null;
-  batchId: string | null;
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -22,7 +21,6 @@ export interface AuthUser {
   role: string;
   collegeId: string | null;
   programId: string | null;
-  batchId: string | null;
 }
 
 // Component User type (for frontend components)
@@ -33,5 +31,4 @@ export interface User {
   role: string;
   collegeId?: string;
   programId?: string;
-  batchId?: string;
 }

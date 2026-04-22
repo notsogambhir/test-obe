@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,10 +46,42 @@ interface FilterOptions {
   timeRange: '1h' | '6h' | '24h' | '7d' | '30d' | 'all';
 }
 
+const getContextIcon = (context: string) => {
+  const icons: Record<string, React.ReactElement> = {
+    auth: <Shield className="h-4 w-4" />,
+    database: <Database className="h-4 w-4" />,
+    api_error: <Server className="h-4 w-4" />,
+    api_request: <Activity className="h-4 w-4" />,
+    user_action: <Users className="h-4 w-4" />,
+    performance: <TrendingUp className="h-4 w-4" />,
+    security: <AlertTriangle className="h-4 w-4" />,
+  };
+  
+  return icons[context] || <Bug className="h-4 w-4" />;
+};
+
+const getLevelColor = (level: LogLevel) => {
+  switch (level) {
+    case LogLevel.ERROR: return 'destructive';
+    case LogLevel.WARN: return 'secondary';
+    case LogLevel.INFO: return 'default';
+    default: return 'outline';
+  }
+};
+
+const getLevelName = (level: LogLevel) => {
+  switch (level) {
+    case LogLevel.ERROR: return 'Error';
+    case LogLevel.WARN: return 'Warning';
+    case LogLevel.INFO: return 'Info';
+    case LogLevel.DEBUG: return 'Debug';
+    default: return 'Unknown';
+  }
+};
+
 export function ErrorDashboard() {
   const { user } = useAuth();
-  const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [stats, setStats] = useState<ErrorStats | null>(null);
+  const [allLogs, setAllLogs] = useState<LogEntry[]>([]);
   const [filters, setFilters] = useState<FilterOptions>({
     level: LogLevel.ERROR,
     context: 'all',
@@ -58,26 +90,24 @@ export function ErrorDashboard() {
   });
   const [loading, setLoading] = useState(true);
 
-  // Load logs and calculate stats
+  // Load logs initially
   useEffect(() => {
     loadLogs();
-  }, [filters.timeRange]);
+  }, []); // Only fetch manually via the refresh button or on mount
 
-  const loadLogs = () => {
+  const loadLogs = useCallback(() => {
     setLoading(true);
     try {
-      const allLogs = logger.getLogs();
-      const filteredLogs = filterLogs(allLogs, filters);
-      setLogs(filteredLogs);
-      calculateStats(filteredLogs);
+      const logs = logger.getLogs();
+      setAllLogs(logs);
     } catch (error) {
-      console.error('Failed to load logs:', error);
+      logger.error('Failed to load logs from storage interface', { error: error instanceof Error ? error : new Error(String(error)) });
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const filterLogs = (allLogs: LogEntry[], filters: FilterOptions): LogEntry[] => {
+  const filteredLogs = useMemo(() => {
     let filtered = [...allLogs];
 
     // Filter by level
@@ -116,9 +146,11 @@ export function ErrorDashboard() {
     }
 
     return filtered;
-  };
+  }, [allLogs, filters]);
 
-  const calculateStats = (filteredLogs: LogEntry[]) => {
+  const stats = useMemo(() => {
+    if (filteredLogs.length === 0) return null;
+
     const errors = filteredLogs.filter(log => log.level === LogLevel.ERROR);
     const warnings = filteredLogs.filter(log => log.level === LogLevel.WARN);
     const infos = filteredLogs.filter(log => log.level === LogLevel.INFO);
@@ -151,7 +183,7 @@ export function ErrorDashboard() {
       return acc;
     }, {} as Record<string, number>);
 
-    const topErrors = Object.entries(errorCounts)
+    const topErrors = (Object.entries(errorCounts) as [string, number][])
       .map(([message, count]) => ({
         message,
         count,
@@ -162,7 +194,7 @@ export function ErrorDashboard() {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    setStats({
+    return {
       totalErrors: errors.length,
       totalWarnings: warnings.length,
       totalInfo: infos.length,
@@ -171,11 +203,11 @@ export function ErrorDashboard() {
       errorsByHour,
       recentErrors: errors.slice(0, 20),
       topErrors,
-    });
-  };
+    };
+  }, [filteredLogs]);
 
   const exportLogs = () => {
-    const dataStr = JSON.stringify(logs, null, 2);
+    const dataStr = JSON.stringify(filteredLogs, null, 2);
     const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
     
     const exportFileDefaultName = `obe-logs-${new Date().toISOString().split('T')[0]}.json`;
@@ -189,43 +221,11 @@ export function ErrorDashboard() {
   const clearLogs = () => {
     if (confirm('Are you sure you want to clear all logs? This action cannot be undone.')) {
       logger.clearLogs();
-      setLogs([]);
-      setStats(null);
+      setAllLogs([]);
     }
   };
 
-  const getContextIcon = (context: string) => {
-    const icons: Record<string, React.ReactElement> = {
-      auth: <Shield className="h-4 w-4" />,
-      database: <Database className="h-4 w-4" />,
-      api_error: <Server className="h-4 w-4" />,
-      api_request: <Activity className="h-4 w-4" />,
-      user_action: <Users className="h-4 w-4" />,
-      performance: <TrendingUp className="h-4 w-4" />,
-      security: <AlertTriangle className="h-4 w-4" />,
-    };
-    
-    return icons[context] || <Bug className="h-4 w-4" />;
-  };
-
-  const getLevelColor = (level: LogLevel) => {
-    switch (level) {
-      case LogLevel.ERROR: return 'destructive';
-      case LogLevel.WARN: return 'secondary';
-      case LogLevel.INFO: return 'default';
-      default: return 'outline';
-    }
-  };
-
-  const getLevelName = (level: LogLevel) => {
-    switch (level) {
-      case LogLevel.ERROR: return 'Error';
-      case LogLevel.WARN: return 'Warning';
-      case LogLevel.INFO: return 'Info';
-      case LogLevel.DEBUG: return 'Debug';
-      default: return 'Unknown';
-    }
-  };
+  // UI Render code begins below
 
   if (loading) {
     return (
@@ -473,7 +473,7 @@ export function ErrorDashboard() {
               <CardContent>
                 {stats && Object.entries(stats.errorsByContext).length > 0 ? (
                   <div className="space-y-2">
-                    {Object.entries(stats.errorsByContext)
+                    {(Object.entries(stats.errorsByContext) as [string, number][])
                       .sort(([,a], [,b]) => b - a)
                       .map(([context, count]) => (
                         <div key={context} className="flex items-center justify-between">
@@ -499,7 +499,7 @@ export function ErrorDashboard() {
               <CardContent>
                 {stats && Object.keys(stats.errorsByHour).length > 0 ? (
                   <div className="space-y-2">
-                    {Object.entries(stats.errorsByHour)
+                    {(Object.entries(stats.errorsByHour) as [string, number][])
                       .sort(([a], [b]) => a.localeCompare(b))
                       .map(([hour, count]) => (
                         <div key={hour} className="flex items-center justify-between">
@@ -563,10 +563,10 @@ export function ErrorDashboard() {
         <TabsContent value="all">
           <Card>
             <CardHeader>
-              <CardTitle>All Logs ({logs.length})</CardTitle>
+              <CardTitle>All Logs ({filteredLogs.length})</CardTitle>
             </CardHeader>
             <CardContent>
-              {logs.length === 0 ? (
+              {filteredLogs.length === 0 ? (
                 <Alert>
                   <AlertTitle>No Logs Found</AlertTitle>
                   <AlertDescription>
@@ -575,7 +575,7 @@ export function ErrorDashboard() {
                 </Alert>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {logs.map((log, index) => (
+                  {filteredLogs.map((log, index) => (
                     <div key={index} className="border rounded-lg p-3">
                       <div className="flex items-center gap-2 mb-2">
                         <Badge variant={getLevelColor(log.level)}>

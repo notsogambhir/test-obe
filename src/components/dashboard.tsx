@@ -4,7 +4,6 @@ import React from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { DashboardOverview } from '@/components/dashboard-overview';
 import { UserManagement } from '@/components/user-management';
-import { AcademicStructure } from '@/components/academic-structure';
 import { CourseManagement } from '@/components/course-management';
 import { useSidebarContext } from '@/contexts/sidebar-context';
 import { SimpleDashboard } from '@/components/simple-dashboard';
@@ -21,7 +20,7 @@ interface User {
   batchId?: string;
 }
 
-type ActiveView = 'dashboard' | 'users' | 'academic' | 'courses';
+type ActiveView = 'dashboard' | 'users' | 'courses';
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -36,8 +35,7 @@ export function Dashboard() {
 
     if (user && (user.role === 'ADMIN' || user.role === 'UNIVERSITY')) {
       items.push(
-        { id: 'users', label: 'User Management', icon: 'Users' },
-        { id: 'academic', label: 'Academic Structure', icon: 'Building' }
+        { id: 'users', label: 'User Management', icon: 'Users' }
       );
     }
 
@@ -54,8 +52,6 @@ export function Dashboard() {
     switch (activeView) {
       case 'users':
         return <UserManagement />;
-      case 'academic':
-        return <AcademicStructure user={user!} />;
       case 'courses':
         return <CourseManagement user={user!} />;
       default:

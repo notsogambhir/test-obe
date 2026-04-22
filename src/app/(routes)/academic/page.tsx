@@ -1,18 +1,20 @@
 'use client';
 
-import { useAuth } from '@/hooks/use-auth';
-import { AcademicStructure } from '@/components/academic-structure';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function AcademicPage() {
-  const { user } = useAuth();
+  const router = useRouter();
 
-  if (!user) {
-    return <div>Loading...</div>;
-  }
+  useEffect(() => {
+    router.replace('/admin');
+  }, [router]);
 
   return (
-    <div className="p-6">
-      <AcademicStructure user={user} />
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="text-center">
+        <p className="text-lg text-muted-foreground animate-pulse">Redirecting to Academic Management...</p>
+      </div>
     </div>
   );
 }

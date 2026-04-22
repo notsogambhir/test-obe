@@ -355,7 +355,7 @@ export function DashboardOverview() {
         )}
 
         {/* Course Management Access for Program Coordinators */}
-        {user!.role === 'PROGRAM_COORDINATOR' && user!.programId && user!.batchId && (
+        {user!.role === 'PROGRAM_COORDINATOR' && user!.programId && selectedBatch && (
           <Button
             onClick={() => setShowCourseManagement(true)}
             className="flex items-center gap-2 bg-red-600 hover:bg-red-700"

@@ -3,10 +3,11 @@ import { db } from '@/lib/db';
 import { z } from 'zod';
 
 const bulkStudentSchema = z.object({
+  collegeId: z.string().optional(),
+  programId: z.string().optional(),
   students: z.array(z.object({
     studentId: z.string().min(1, 'Student ID is required'),
     name: z.string().min(1, 'Student name is required'),
-    password: z.string().min(6, 'Password must be at least 6 characters'),
     programId: z.string().optional(),
     batchId: z.string().optional(),
   })).min(1, 'At least one student is required')
@@ -24,13 +25,12 @@ export async function POST(request: NextRequest) {
       body.students = body.students.map((student: any) => ({
         studentId: String(student.studentId || '').trim(),
         name: String(student.name || '').trim(),
-        password: String(student.password || 'password123'),
         programId: student.programId ? String(student.programId).trim() : undefined,
         batchId: student.batchId ? String(student.batchId).trim() : undefined,
       }));
     }
     
-    const { students } = bulkStudentSchema.parse(body);
+    const { students, collegeId: bodyCollegeId, programId: bodyProgramId } = bulkStudentSchema.parse(body);
     console.log('Validated students count:', students.length);
 
     if (!students || students.length === 0) {
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     for (const studentData of students) {
       try {
         // Check if student ID already exists
-        const existingStudent = await db.user.findUnique({
+        const existingStudent = await db.student.findUnique({
           where: { studentId: studentData.studentId.trim() },
         });
 
@@ -68,13 +68,21 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Check if batch exists (if provided)
-        if (studentData.batchId) {
+        let studentCollegeId = bodyCollegeId;
+        let studentProgramId = bodyProgramId || studentData.programId;
+        let studentBatchId = studentData.batchId;
+
+        // Fetch batch details to get program/college if needed
+        if (studentBatchId) {
           const batch = await db.batch.findUnique({
-            where: { id: studentData.batchId },
+            where: { id: studentBatchId },
+            include: { program: true }
           });
 
-          if (!batch) {
+          if (batch) {
+            studentProgramId = batch.programId;
+            studentCollegeId = batch.program.collegeId;
+          } else {
             results.failed.push({
               studentId: studentData.studentId,
               name: studentData.name,
@@ -84,15 +92,23 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        if (!studentCollegeId || !studentProgramId || !studentBatchId) {
+          results.failed.push({
+            studentId: studentData.studentId,
+            name: studentData.name,
+            reason: 'Missing college, program, or batch information'
+          });
+          continue;
+        }
+
         // Create the student
-        const student = await db.user.create({
+        const student = await db.student.create({
           data: {
             studentId: studentData.studentId.trim(),
             name: studentData.name.trim(),
-            password: studentData.password,
-            role: 'STUDENT',
-            programId: studentData.programId,
-            batchId: studentData.batchId,
+            collegeId: studentCollegeId,
+            programId: studentProgramId,
+            batchId: studentBatchId,
           },
           include: {
             batch: {

@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
         role: user.role,
         collegeId: user.collegeId || null,
         programId: user.programId || null,
-        batchId: user.batchId || null,
       });
       console.log('Generated token (first 20 chars):', token.substring(0, 20) + '...');
 
@@ -62,7 +61,7 @@ export async function POST(request: NextRequest) {
       response.cookies.set('auth-token', token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
+        sameSite: 'strict',
         maxAge: 7 * 24 * 60 * 60, // 7 days
       });
 

@@ -14,7 +14,7 @@ export default function Error({
 }) {
   useEffect(() => {
     // Log the error to an error reporting service
-    console.error('Course detail error:', error);
+    console.error('Course management error:', error);
   }, [error]);
 
   return (
@@ -24,9 +24,9 @@ export default function Error({
           <div className="mx-auto w-12 h-12 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
             <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
-          <CardTitle className="text-2xl">Course Error</CardTitle>
+          <CardTitle className="text-2xl">Management Error</CardTitle>
           <CardDescription>
-            We encountered an error loading this course.
+            We encountered an error in the course management section.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -52,7 +52,7 @@ export default function Error({
               onClick={() => window.location.href = '/courses'} 
               className="flex-1"
             >
-              All courses
+              Back to courses
             </Button>
           </div>
         </CardContent>

@@ -3,7 +3,6 @@
 import { useAuth } from '@/hooks/use-auth';
 import { LoginForm } from '@/components/login-form';
 import { ProgramSelection } from '@/components/program-selection';
-import { BatchSelectionModal } from '@/components/batch-selection-modal';
 import { GlobalLayout } from '@/components/global-layout';
 import { memo } from 'react';
 
@@ -36,7 +35,6 @@ const AppWrapper = memo(function AppWrapper({ children }: AppWrapperProps) {
   return (
     <GlobalLayout user={user}>
       {children}
-      <BatchSelectionModal user={user} />
     </GlobalLayout>
   );
 });

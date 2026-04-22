@@ -44,11 +44,29 @@ export function LoginForm() {
   const [colleges, setColleges] = useState<College[]>([]);
   const [batches, setBatches] = useState<Batch[]>([]);
   const [showBatchSelection, setShowBatchSelection] = useState(false);
+  const [demoUsers, setDemoUsers] = useState<any[]>([]);
+  const [fetchingDemoUsers, setFetchingDemoUsers] = useState(false);
 
   useEffect(() => {
     fetchColleges();
     fetchBatches();
+    fetchDemoUsers();
   }, []);
+
+  const fetchDemoUsers = async () => {
+    setFetchingDemoUsers(true);
+    try {
+      const response = await fetch('/api/auth/demo-users');
+      if (response.ok) {
+        const data = await response.json();
+        setDemoUsers(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch demo users:', error);
+    } finally {
+      setFetchingDemoUsers(false);
+    }
+  };
 
   const fetchColleges = async () => {
     try {
@@ -263,90 +281,48 @@ export function LoginForm() {
           </CardHeader>
           <CardContent>
             {/* Quick Login Buttons */}
-            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg">
-              <h4 className="text-sm font-medium text-blue-700 mb-3">Quick Login (Test Accounts)</h4>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('admin@obeportal.com', 'password123', 'CUIET')}
-                  className="text-xs"
-                >
-                  Admin
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('university@obeportal.com', 'password123', 'CUIET')}
-                  className="text-xs"
-                >
-                  University
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('cse@obeportal.com', 'password123', 'CUIET')}
-                  className="text-xs"
-                >
-                  Dept Head (CSE)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('business@obeportal.com', 'password123', 'CBS')}
-                  className="text-xs"
-                >
-                  Dept Head (CBS)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('teacher2@obeportal.com', 'password123', 'CBS')}
-                  className="text-xs"
-                >
-                  Teacher (BBA)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('teacher1@obeportal.com', 'password123', 'CUIET')}
-                  className="text-xs"
-                >
-                  Teacher (ME)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('pc.bba@obeportal.com', 'password123', 'CBS')}
-                  className="text-xs"
-                >
-                  Program Coord (BBA)
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickLogin('pc.beme@obeportal.com', 'password123', 'CUIET')}
-                  className="text-xs"
-                >
-                  Program Coord (ME)
-                </Button>
+            {/* Quick Login Buttons */}
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-100 rounded-lg max-h-[400px] overflow-y-auto">
+              <div className="flex items-center justify-between mb-3">
+                <h4 className="text-sm font-medium text-blue-700">Quick Login (Active Demo Accounts)</h4>
+                {fetchingDemoUsers && <div className="animate-spin h-3 w-3 border-2 border-blue-600 border-t-transparent rounded-full"></div>}
               </div>
-              <div className="mt-3 space-y-1 text-xs text-blue-600">
-                <p><strong>Test Account Passwords:</strong></p>
-                <p>• Admin: password123</p>
-                <p>• University: password123</p>
-                <p>• Department Heads: password123</p>
-                <p>• Program Coordinators: password123</p>
-                <p>• Teachers: password123</p>
-                <p>• Students: password123</p>
+
+              {demoUsers.length === 0 && !fetchingDemoUsers ? (
+                <p className="text-xs text-blue-600 italic">No test accounts available.</p>
+              ) : (
+                <div className="space-y-4">
+                  {/* Group users by role */}
+                  {Array.from(new Set(demoUsers.map(u => u.role))).map(role => (
+                    <div key={role} className="space-y-2">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-blue-500 border-b border-blue-100 pb-1">
+                        {role.replace('_', ' ')}
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {demoUsers.filter(u => u.role === role).map(user => (
+                          <Button
+                            key={user.id}
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleQuickLogin(user.email, 'password123', user.collegeCode)}
+                            className="text-[10px] h-auto py-1.5 px-2 justify-start items-center text-left whitespace-normal"
+                            disabled={loading}
+                          >
+                            <div className="flex flex-col">
+                              <span className="font-medium truncate max-w-[120px]">{user.name}</span>
+                              <span className="text-[9px] opacity-70">{user.collegeCode || 'No College'}</span>
+                            </div>
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="mt-4 space-y-1 text-xs text-blue-600 pt-3 border-t border-blue-100">
+                <p><strong>Note:</strong> All demo accounts use <code>password123</code></p>
               </div>
             </div>
 
